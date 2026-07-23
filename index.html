@@ -6,6 +6,11 @@
     <title>Chilling Forum | Home</title>
     <link rel="icon" type="image/png" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/comments.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs for Cloud Database Sync -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <style>
         :root {
             --bg-body: #18191c;
@@ -18,7 +23,6 @@
             --text-muted: #9ca3af;
             --border-color: #374151;
             
-            /* Status Prefixes */
             --prefix-pending: #ffc107;
             --prefix-curator: #8b5cf6;
             --prefix-reviewing: #06b6d4;
@@ -26,7 +30,6 @@
             --prefix-approved: #22c55e;
             --prefix-rejected: #ef4444;
             
-            /* Staff Roles */
             --role-admin: #ef4444;
             --role-curator: #8b5cf6;
             --role-banned: #64748b;
@@ -439,8 +442,6 @@
             padding: 20px;
             margin-bottom: 20px;
         }
-
-        .form-group { margin-bottom: 15px; }
 
         .form-control {
             width: 100%;
@@ -994,7 +995,7 @@
         </div>
     </div>
 
-    <!-- BAN USER MODAL (CURATOR EXCLUSIVE) -->
+    <!-- BAN USER MODAL -->
     <div id="ban-modal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -1021,131 +1022,64 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- CLOUD JAVASCRIPT LOGIC -->
     <script>
+        // REPLACE WITH YOUR ACTUAL FIREBASE CONFIGURATION KEYS FROM FIREBASE CONSOLE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         let currentUser = null;
         let selectedPrefix = "Pending review";
         let activeThreadId = null;
-        let userToBan = null;
+        let userToBanDocId = null;
 
         let registeredUsers = [];
         let threads = [];
 
-        // PERSISTENT INDEXEDDB STORAGE LAYER (Ensures cross-browser data synchronization architecture template)
-        const DB_NAME = "ChillingForumDB";
-        const DB_VERSION = 1;
-        let db = null;
+        // Realtime Data Sync Listeners from Cloud Database (Visible to Everyone Instantly)
+        function initCloudSync() {
+            db.collection("users").onSnapshot((snapshot) => {
+                registeredUsers = [];
+                snapshot.forEach((doc) => {
+                    registeredUsers.push({ docId: doc.id, ...doc.data() });
+                });
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = (event) => reject(event.target.error);
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(db);
-                };
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains('users')) {
-                        database.createObjectStore('users', { keyPath: 'gmail' });
-                    }
-                    if (!database.objectStoreNames.contains('threads')) {
-                        database.createObjectStore('threads', { keyPath: 'id' });
-                    }
-                };
-            });
-        }
-
-        async function seedDefaultDataIfNeeded() {
-            const users = await dbGetAll('users');
-            const storedThreads = await dbGetAll('threads');
-
-            const defaultUsers = [
-                { gmail: "rmercer534@gmail.com", username: "RMercer", discord: "rmercer#0001", password: "101Rex20", role: "Curator of chilling", isBanned: false },
-                { gmail: "admin@gmail.com", username: "SystemAdmin", discord: "admin#0001", password: "admin123", role: "Administrator", isBanned: false },
-                { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "player123", role: "Player", isBanned: false }
-            ];
-
-            const defaultThreads = [
-                {
-                    id: 1,
-                    title: "DM in Green Zone",
-                    author: "Crazy_Moore",
-                    authorRole: "Player",
-                    authorGmail: "crazy_player@gmail.com",
-                    prefix: "Pending review",
-                    isLocked: false,
-                    isArchived: false,
-                    details: {
-                        yourId: "1024",
-                        nickname: "Crazy_Moore",
-                        suspectId: "5021",
-                        date: "2026-03-29",
-                        discordId: "moore#0001",
-                        proofs: "https://imgur.com/example"
-                    },
-                    posts: [
-                        {
-                            author: "Crazy_Moore",
-                            role: "Player",
-                            gmail: "crazy_player@gmail.com",
-                            content: "Player killed me without any roleplay reason near the central bank.",
-                            date: new Date(Date.now() - 3600000).toISOString()
+                const savedEmail = localStorage.getItem('chilling_forum_logged_email');
+                if (savedEmail) {
+                    const foundUser = registeredUsers.find(u => u.gmail === savedEmail);
+                    if (foundUser) {
+                        if (foundUser.isBanned) {
+                            alert("Your account has been suspended/banned.");
+                            logout();
+                        } else {
+                            currentUser = foundUser;
+                            updateAuthUI();
                         }
-                    ]
+                    }
                 }
-            ];
+            });
 
-            if (users.length === 0) {
-                for (const u of defaultUsers) {
-                    await dbPut('users', u);
-                }
-            }
-
-            if (storedThreads.length === 0) {
-                for (const t of defaultThreads) {
-                    await dbPut('threads', t);
-                }
-            }
-        }
-
-        function dbGetAll(storeName) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(storeName, 'readonly');
-                const store = transaction.objectStore(storeName);
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event) => reject(event.target.error);
+            // Live public sync for all threads across any browser
+            db.collection("threads").onSnapshot((snapshot) => {
+                threads = [];
+                snapshot.forEach((doc) => {
+                    threads.push({ docId: doc.id, ...doc.data() });
+                });
+                threads.sort((a, b) => b.id - a.id);
+                handleRoute();
             });
         }
 
-        function dbPut(storeName, item) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(storeName, 'readwrite');
-                const store = transaction.objectStore(storeName);
-                const request = store.put(item);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event) => reject(event.target.error);
-            });
-        }
-
-        async function loadAppData() {
-            registeredUsers = await dbGetAll('users');
-            threads = await dbGetAll('threads');
-            // Sort threads newest first
-            threads.sort((a, b) => b.id - a.id);
-        }
-
-        async function saveData() {
-            for (const u of registeredUsers) {
-                await dbPut('users', u);
-            }
-            for (const t of threads) {
-                await dbPut('threads', t);
-            }
-        }
-
-        // BROWSER HISTORY ROUTER
         window.addEventListener('popstate', (e) => {
             handleRoute();
         });
@@ -1178,33 +1112,38 @@
             window.location.hash = path;
         }
 
-        // INITIALIZE APPLICATION & DATABASE ON LOAD
         window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await initDB();
-                await seedDefaultDataIfNeeded();
-                await loadAppData();
-
-                const savedEmail = localStorage.getItem('chilling_forum_logged_email');
-                if (savedEmail) {
-                    const foundUser = registeredUsers.find(u => u.gmail === savedEmail);
-                    if (foundUser) {
-                        if (foundUser.isBanned) {
-                            localStorage.removeItem('chilling_forum_logged_email');
-                            currentUser = null;
-                        } else {
-                            currentUser = foundUser;
-                            updateAuthUI();
-                        }
-                    }
+            initCloudSync();
+            
+            setTimeout(async () => {
+                const snapshot = await db.collection("users").get();
+                if (snapshot.empty) {
+                    await db.collection("users").doc("rmercer534@gmail.com").set({
+                        gmail: "rmercer534@gmail.com",
+                        username: "RMercer",
+                        discord: "rmercer#0001",
+                        password: "101Rex20",
+                        role: "Curator of chilling",
+                        isBanned: false
+                    });
                 }
-                handleRoute();
-            } catch (err) {
-                console.error("Database initialization failed:", err);
+            }, 1000);
+
+            const savedEmail = localStorage.getItem('chilling_forum_logged_email');
+            if (savedEmail) {
+                setTimeout(() => {
+                    const foundUser = registeredUsers.find(u => u.gmail === savedEmail);
+                    if (foundUser && !foundUser.isBanned) {
+                        currentUser = foundUser;
+                        updateAuthUI();
+                    }
+                }, 500);
             }
+            handleRoute();
         });
 
         function timeAgo(dateString) {
+            if (!dateString) return "Just now";
             const date = new Date(dateString);
             const now = new Date();
             const seconds = Math.floor((now - date) / 1000);
@@ -1243,16 +1182,14 @@
             document.getElementById('landing-page').style.display = 'flex';
         }
 
-        async function showForumListView() {
-            await loadAppData();
+        function showForumListView() {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-forum-list').classList.remove('hidden');
             renderThreads();
         }
 
-        async function showArchiveView() {
-            await loadAppData();
+        function showArchiveView() {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-archive-folder').classList.remove('hidden');
@@ -1276,8 +1213,7 @@
             }
         }
 
-        async function showThreadDetailView(id) {
-            await loadAppData();
+        function showThreadDetailView(id) {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-thread-detail').classList.remove('hidden');
@@ -1294,7 +1230,6 @@
                 </div>
             `;
 
-            // STAFF CONTROLS
             const adminControls = document.getElementById('admin-controls');
             const isStaff = currentUser && (currentUser.role === 'Curator of chilling' || currentUser.role === 'Administrator');
             
@@ -1333,7 +1268,7 @@
                         ${t.isLocked ? '<i class="fa-solid fa-lock" style="color:var(--accent-yellow); margin-left:5px;"></i>' : ''}
                     </div>
                     <div>${t.author}</div>
-                    <div style="font-size:12px; color:var(--text-muted);">${timeAgo(t.posts[0].date)}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">${timeAgo(t.posts && t.posts[0] ? t.posts[0].date : '')}</div>
                 </div>
             `).join('');
         }
@@ -1355,7 +1290,7 @@
                         <strong style="margin-left:8px;">${t.title}</strong>
                     </div>
                     <div>${t.author}</div>
-                    <div style="font-size:12px; color:var(--text-muted);">${timeAgo(t.posts[0].date)}</div>
+                    <div style="font-size:12px; color:var(--text-muted);">${timeAgo(t.posts && t.posts[0] ? t.posts[0].date : '')}</div>
                 </div>
             `).join('');
         }
@@ -1402,8 +1337,9 @@
                 return;
             }
 
+            const threadId = Date.now();
             const newThread = {
-                id: Date.now(),
+                id: threadId,
                 title: document.getElementById('thread-title').value,
                 author: currentUser ? currentUser.username : "Guest",
                 authorRole: currentUser ? currentUser.role : "Player",
@@ -1429,8 +1365,8 @@
                     }
                 ]
             };
-            threads.unshift(newThread);
-            await saveData();
+
+            await db.collection("threads").doc(threadId.toString()).set(newThread);
             document.getElementById('create-thread-form').reset();
             navigateTo('forum-list');
         }
@@ -1461,23 +1397,23 @@
                 }
 
                 let actionButtonHTML = '';
-                if (isCurator && p.author !== currentUser.username && p.role !== 'Curator of chilling') {
+                if (isCurator && currentUser && p.author !== currentUser.username && p.role !== 'Curator of chilling') {
                     const targetUser = registeredUsers.find(u => u.gmail === p.gmail);
                     if (targetUser && targetUser.isBanned) {
-                        actionButtonHTML = `<button class="btn-green" style="margin-top:5px;" onclick="unbanUser('${p.gmail}')"><i class="fa-solid fa-unlock"></i> Unban User</button>`;
-                    } else {
-                        actionButtonHTML = `<button class="btn-red" style="margin-top:5px;" onclick="openBanModal('${p.gmail}', '${p.author}')"><i class="fa-solid fa-ban"></i> Ban User</button>`;
+                        actionButtonHTML = `<button class="btn-green" style="margin-top:5px;" onclick="unbanUser('${targetUser.docId}', '${p.gmail}')"><i class="fa-solid fa-unlock"></i> Unban User</button>`;
+                    } else if (targetUser) {
+                        actionButtonHTML = `<button class="btn-red" style="margin-top:5px;" onclick="openBanModal('${targetUser.docId}', '${p.gmail}', '${p.author}')"><i class="fa-solid fa-ban"></i> Ban User</button>`;
                     }
                 }
 
-                const roleCSS = p.role.toLowerCase().replace(/\s+/g, '-');
+                const roleCSS = (p.role || 'Player').toLowerCase().replace(/\s+/g, '-');
 
                 return `
                     <div class="post-card">
                         <div class="post-author">
                             <div class="avatar">${p.author.charAt(0)}</div>
                             <strong style="font-size:13px;">${p.author}</strong>
-                            <span class="role-badge ${roleCSS}">${p.role}</span>
+                            <span class="role-badge ${roleCSS}">${p.role || 'Player'}</span>
                             ${gmailTag}
                             ${actionButtonHTML}
                         </div>
@@ -1497,7 +1433,7 @@
             if (thread.isLocked && !isStaff) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 10px;"><i class="fa-solid fa-lock" style="color:var(--accent-yellow);"></i> This thread is not open for further replies.</div>`;
             } else if (!currentUser) {
-                replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted);">Please log in to leave a reply.</div>`;
+                replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted);">Please <a href="javascript:void(0)" onclick="openModal('login-modal')" style="color:var(--accent-yellow);">log in</a> to leave a reply.</div>`;
             } else if (currentUser.isBanned) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:#ef4444;"><i class="fa-solid fa-ban"></i> Your forum account is suspended. You cannot reply.</div>`;
             } else {
@@ -1523,7 +1459,6 @@
             if (!thread) return;
 
             const isStaff = currentUser && (currentUser.role === 'Curator of chilling' || currentUser.role === 'Administrator');
-            
             if (thread.isLocked && !isStaff) {
                 alert("This thread is not open for further replies.");
                 return;
@@ -1540,18 +1475,18 @@
                 date: new Date().toISOString()
             });
 
-            await saveData();
+            await db.collection("threads").doc(thread.id.toString()).update({
+                posts: thread.posts
+            });
+
             renderPosts(thread);
         }
 
-        // STAFF ACTIONS
         async function updateThreadStatus(status) {
             if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
-                thread.prefix = status;
-                await saveData();
-                showThreadDetailView(thread.id);
+                await db.collection("threads").doc(thread.id.toString()).update({ prefix: status });
             }
         }
 
@@ -1559,9 +1494,7 @@
             if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
-                thread.isLocked = !thread.isLocked;
-                await saveData();
-                showThreadDetailView(thread.id);
+                await db.collection("threads").doc(thread.id.toString()).update({ isLocked: !thread.isLocked });
             }
         }
 
@@ -1569,16 +1502,15 @@
             if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
-                thread.isArchived = !thread.isArchived;
-                await saveData();
-                navigateTo(thread.isArchived ? 'archive-folder' : 'forum-list');
+                const newArchivedState = !thread.isArchived;
+                await db.collection("threads").doc(thread.id.toString()).update({ isArchived: newArchivedState });
+                navigateTo(newArchivedState ? 'archive-folder' : 'forum-list');
             }
         }
 
-        // BAN SYSTEM
-        function openBanModal(gmail, username) {
+        function openBanModal(docId, gmail, username) {
             if (!currentUser || currentUser.role !== 'Curator of chilling') return;
-            userToBan = registeredUsers.find(u => u.gmail === gmail);
+            userToBanDocId = docId;
             document.getElementById('ban-target-text').innerText = `Suspending user: ${username} (${gmail})`;
             openModal('ban-modal');
         }
@@ -1590,66 +1522,37 @@
             const time = document.getElementById('ban-time').value;
             const reason = document.getElementById('ban-reason').value;
 
-            if (userToBan) {
-                userToBan.isBanned = true;
-                userToBan.role = 'Banned';
-                userToBan.banDetails = { time, reason };
-                
-                threads.forEach(t => {
-                    t.posts.forEach(p => {
-                        if (p.gmail === userToBan.gmail) {
-                            p.role = 'Banned';
-                        }
-                    });
+            if (userToBanDocId) {
+                await db.collection("users").doc(userToBanDocId).update({
+                    isBanned: true,
+                    role: 'Banned',
+                    banDetails: { time, reason }
                 });
 
-                await saveData();
-                alert(`User ${userToBan.username} (${userToBan.gmail}) has been banned.`);
-
+                alert("Account has been banned.");
                 closeModal('ban-modal');
                 document.getElementById('ban-form').reset();
-
-                if (activeThreadId) {
-                    const currentThread = threads.find(t => t.id === activeThreadId);
-                    if (currentThread) renderPosts(currentThread);
-                }
             }
         }
 
-        async function unbanUser(gmail) {
+        async function unbanUser(docId, gmail) {
             if (!currentUser || currentUser.role !== 'Curator of chilling') {
                 alert("Only Curator of chilling can unban accounts!");
                 return;
             }
 
-            const targetUser = registeredUsers.find(u => u.gmail === gmail);
-            if (targetUser) {
-                targetUser.isBanned = false;
-                targetUser.role = 'Player';
-                delete targetUser.banDetails;
+            await db.collection("users").doc(docId).update({
+                isBanned: false,
+                role: 'Player',
+                banDetails: firebase.firestore.FieldValue.delete()
+            });
 
-                threads.forEach(t => {
-                    t.posts.forEach(p => {
-                        if (p.gmail === targetUser.gmail) {
-                            p.role = 'Player';
-                        }
-                    });
-                });
-
-                await saveData();
-                alert(`User ${targetUser.username} (${targetUser.gmail}) has been unbanned!`);
-
-                if (activeThreadId) {
-                    const currentThread = threads.find(t => t.id === activeThreadId);
-                    if (currentThread) renderPosts(currentThread);
-                }
-            }
+            alert(`User (${gmail}) has been unbanned!`);
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        /* REGISTRATION */
         async function handleRegister(e) {
             e.preventDefault();
             const gmail = document.getElementById('reg-gmail').value.trim().toLowerCase();
@@ -1671,11 +1574,10 @@
             }
 
             const newUser = { gmail, username, discord, password, role, isBanned: false };
-            registeredUsers.push(newUser);
+            await db.collection("users").doc(gmail).set(newUser);
             
             currentUser = newUser;
             localStorage.setItem('chilling_forum_logged_email', newUser.gmail);
-            await saveData();
             
             updateAuthUI();
             document.getElementById('register-form').reset();
@@ -1683,7 +1585,6 @@
             alert("Registration successful!");
         }
 
-        /* LOGIN HANDLER */
         function handleLogin(e) {
             e.preventDefault();
             const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
@@ -1699,8 +1600,7 @@
             if (user.isBanned) {
                 const reason = (user.banDetails && user.banDetails.reason) ? user.banDetails.reason : "Violation of forum rules";
                 const time = (user.banDetails && user.banDetails.time) ? user.banDetails.time : "Permanent";
-                
-                alert(`ACCOUNT BANNED!\n\nReason: ${reason}\nBan Duration: ${time}\n\nYou are not allowed to log into this account.`);
+                alert(`ACCOUNT BANNED!\n\nReason: ${reason}\nBan Duration: ${time}`);
                 return;
             }
 
