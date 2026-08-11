@@ -188,28 +188,7 @@
             flex: 1;
         }
 
-        /* Landing Page */
-        .landing-hero {
-            text-align: center;
-            padding: 60px 20px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            margin-top: 40px;
-        }
-
-        .landing-hero h1 {
-            font-size: 36px;
-            margin-bottom: 16px;
-        }
-
-        .landing-hero p {
-            color: var(--text-muted);
-            margin-bottom: 24px;
-            font-size: 18px;
-        }
-
-        /* Breadcrumb / Navigation bar inside forum */
+        /* Forum Breadcrumb / Nav */
         .forum-nav {
             display: flex;
             justify-content: space-between;
@@ -450,7 +429,7 @@
 <body>
 
     <header>
-        <div class="logo" onclick="navigateTo('landing')">
+        <div class="logo" onclick="navigateTo('forum-list')">
             <i class="fa-solid fa-shield-halved" style="color: var(--accent-yellow);"></i>
             HV <span>Complaints</span>
         </div>
@@ -487,23 +466,11 @@
     </header>
 
     <div class="container">
-
-        <!-- LANDING VIEW -->
-        <div id="landing-page">
-            <div class="landing-hero" style="width: 100%;">
-                <h1>Welcome to HV Complaints Portal</h1>
-                <p>Submit player reports, appeal bans, and communicate with community staff.</p>
-                <button class="btn btn-yellow" style="padding: 12px 24px; font-size: 16px;" onclick="navigateTo('forum-list')">
-                    Enter Complaints Forum <i class="fa-solid fa-arrow-right"></i>
-                </button>
-            </div>
-        </div>
-
         <!-- FORUM WRAPPER -->
-        <div id="forum-app" class="hidden">
+        <div id="forum-app">
             <div class="forum-nav">
                 <div class="breadcrumb">
-                    <a onclick="navigateTo('landing')"><i class="fa-solid fa-house"></i> Home</a>
+                    <a onclick="navigateTo('forum-list')"><i class="fa-solid fa-house"></i> Home</a>
                     <span>/</span>
                     <span id="breadcrumb-current">Complaints Forum</span>
                 </div>
@@ -743,7 +710,7 @@
         </div>
     </div>
 
-    <!-- Load Firebase App and Database SDKs -->
+    <!-- Firebase App and Database SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -771,7 +738,7 @@
         let registeredUsers = [];
         let threads = [];
 
-        // Realtime Syncing from Cloud Database
+        // Realtime Database Sync
         db.ref('forum_users').on('value', (snapshot) => {
             const val = snapshot.val();
             registeredUsers = val ? Object.values(val) : [];
@@ -861,9 +828,7 @@
 
         function handleRoute() {
             const hash = window.location.hash.replace('#', '');
-            if (!hash || hash === 'landing') {
-                showLandingView();
-            } else if (hash === 'forum-list') {
+            if (!hash || hash === 'forum-list') {
                 showForumListView();
             } else if (hash === 'archive-folder') {
                 showArchiveView();
@@ -925,9 +890,6 @@
         }
 
         function hideAllViews() {
-            document.getElementById('landing-page').style.display = 'none';
-            document.getElementById('forum-app').style.display = 'none';
-
             const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-account-details'];
             views.forEach(v => {
                 const el = document.getElementById(v);
@@ -935,34 +897,25 @@
             });
         }
 
-        function showLandingView() {
-            hideAllViews();
-            document.getElementById('landing-page').style.display = 'flex';
-        }
-
         function showForumListView() {
             hideAllViews();
-            document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-forum-list').classList.remove('hidden');
             renderThreads();
         }
 
         function showArchiveView() {
             hideAllViews();
-            document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-archive-folder').classList.remove('hidden');
             renderArchivedThreads();
         }
 
         function showCreateThreadView() {
             hideAllViews();
-            document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-create-thread').classList.remove('hidden');
         }
 
         function showAccountDetailsView() {
             hideAllViews();
-            document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-account-details').classList.remove('hidden');
             if (currentUser) {
                 document.getElementById('acc-username').value = currentUser.username;
@@ -973,7 +926,6 @@
 
         function showThreadDetailView(id) {
             hideAllViews();
-            document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-thread-detail').classList.remove('hidden');
             
             activeThreadId = id;
