@@ -3,33 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chilling Forum | Home</title>
-    <link rel="icon" type="image/png" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/comments.svg">
+    <title>HV - Complaints Forum</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-body: #18191c;
-            --bg-header: #2b2e36;
-            --bg-card: #22252a;
-            --bg-card-alt: #1e2125;
-            --accent-yellow: #ffc107;
-            --accent-yellow-hover: #e0a800;
-            --text-dark: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: #374151;
-            
-            /* Status Prefixes */
-            --prefix-pending: #ffc107;
-            --prefix-curator: #8b5cf6;
-            --prefix-reviewing: #06b6d4;
-            --prefix-consideration: #f97316;
-            --prefix-approved: #22c55e;
-            --prefix-rejected: #ef4444;
-            
-            /* Staff Roles */
-            --role-admin: #ef4444;
-            --role-curator: #8b5cf6;
-            --role-banned: #64748b;
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-yellow: #f59e0b;
+            --accent-yellow-hover: #d97706;
+            --border-color: #334155;
         }
 
         * {
@@ -40,1130 +25,839 @@
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-dark);
-            font-size: 14px;
-            line-height: 1.5;
-            overflow-x: hidden;
-        }
-
-        /* LANDING PAGE STYLES */
-        #landing-page {
-            width: 100%;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             min-height: 100vh;
-            background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.85)), 
-                        url('https://gta-5-map.com/images/wallpapers/gta5_1920x1080.jpg') center/cover no-repeat fixed;
             display: flex;
             flex-direction: column;
         }
 
-        .landing-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 8%;
-            background: rgba(15, 15, 18, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        .hidden {
+            display: none !important;
         }
 
-        .landing-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 20px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            color: #ffffff;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .landing-logo i {
-            color: #8b5cf6;
-            font-size: 26px;
-        }
-
-        .landing-nav {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .landing-nav a {
-            color: #d1d5db;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: color 0.2s;
-        }
-
-        .landing-nav a:hover { color: #ffffff; }
-
-        .online-counter {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 16px;
-            color: #ffffff;
-            margin-left: 15px;
-        }
-
-        .online-counter span {
-            font-size: 20px;
-            color: #a855f7;
-        }
-
-        .btn-purple {
-            background-color: #8b5cf6;
-            color: #ffffff;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 8px;
-            font-weight: 800;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-purple:hover {
-            background-color: #7c3aed;
-            transform: translateY(-2px);
-        }
-
-        .hero-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .hero-title {
-            font-size: 52px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #ffffff;
-            line-height: 1.1;
-            margin-bottom: 15px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
-        }
-
-        .hero-subtitle {
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #d1d5db;
-            text-transform: uppercase;
-            margin-bottom: 35px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
-        }
-
-        .btn-hero-yellow {
-            background-color: var(--accent-yellow);
-            color: #000000;
-            border: none;
-            padding: 16px 40px;
-            border-radius: 12px;
-            font-weight: 900;
-            font-size: 16px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
-        }
-
-        .btn-hero-yellow:hover {
-            background-color: var(--accent-yellow-hover);
-            transform: scale(1.05);
-        }
-
-        /* FORUM APP STYLES */
-        #forum-app { display: none; }
-
+        /* Top Header Navigation */
         header {
-            background-color: var(--bg-header);
-            color: #ffffff;
-            padding: 0 10%;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            position: relative;
+            background-color: var(--bg-card);
             border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 10px;
-            cursor: pointer;
+        }
+
+        .logo span {
             color: var(--accent-yellow);
         }
 
-        .auth-nav {
+        .nav-actions {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
-        .auth-nav button {
-            background: transparent;
-            border: none;
-            color: #d1d5db;
+        .btn {
+            background-color: var(--bg-hover);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
             font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .auth-nav button:hover { color: #ffffff; }
-
-        .user-avatar-btn {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background-color: #374151;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #f3f4f6;
-            text-transform: uppercase;
-        }
-
-        .profile-dropdown {
-            position: absolute;
-            top: 55px;
-            right: 10%;
-            width: 310px;
-            background: var(--bg-card);
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid var(--border-color);
-            display: none;
-            z-index: 100;
-            color: var(--text-dark);
-        }
-
-        .profile-dropdown-header {
-            padding: 15px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--bg-card-alt);
-        }
-
-        .dropdown-menu-items {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            padding: 10px;
-            gap: 5px;
-        }
-
-        .dropdown-menu-items a {
-            padding: 8px;
-            color: var(--text-muted);
-            font-size: 13px;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-
-        .dropdown-menu-items a:hover {
-            background: #374151;
-            color: #fff;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 15px;
-        }
-
-        .breadcrumbs {
-            display: flex;
-            gap: 8px;
-            color: var(--text-muted);
-            font-size: 13px;
-            margin-bottom: 15px;
-        }
-
-        .breadcrumbs a {
-            color: var(--text-muted);
-            text-decoration: none;
-        }
-
-        .section-header {
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        .btn:hover {
+            background-color: #475569;
         }
 
         .btn-yellow {
             background-color: var(--accent-yellow);
             color: #000;
             border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
         }
 
-        .btn-yellow:hover { background-color: var(--accent-yellow-hover); }
+        .btn-yellow:hover {
+            background-color: var(--accent-yellow-hover);
+        }
 
         .btn-red {
             background-color: #ef4444;
-            color: #ffffff;
+            color: #fff;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 11px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
         }
 
-        .btn-red:hover { background-color: #dc2626; }
+        .btn-red:hover {
+            background-color: #dc2626;
+        }
 
         .btn-green {
-            background-color: #22c55e;
-            color: #ffffff;
+            background-color: #10b981;
+            color: #fff;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 11px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
         }
 
-        .btn-green:hover { background-color: #16a34a; }
+        .btn-green:hover {
+            background-color: #059669;
+        }
 
-        .forum-card {
-            background: var(--bg-card);
-            border-radius: 8px;
+        /* Profile Dropdown */
+        .profile-menu-container {
+            position: relative;
+        }
+
+        .user-avatar-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            background: var(--bg-hover);
+            padding: 6px 12px;
+            border-radius: 20px;
             border: 1px solid var(--border-color);
+        }
+
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--accent-yellow);
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .dropdown-card {
+            position: absolute;
+            right: 0;
+            top: 45px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 220px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+            z-index: 200;
+        }
+
+        .dropdown-header {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--bg-hover);
+        }
+
+        /* Main App Container */
+        .container {
+            max-width: 1000px;
+            margin: 24px auto;
+            padding: 0 16px;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Landing Page */
+        .landing-hero {
+            text-align: center;
+            padding: 60px 20px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 40px;
+        }
+
+        .landing-hero h1 {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .landing-hero p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            font-size: 18px;
+        }
+
+        /* Breadcrumb / Navigation bar inside forum */
+        .forum-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: var(--accent-yellow);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Thread List Table / Cards */
+        .forum-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             overflow: hidden;
             margin-bottom: 20px;
         }
 
-        .folder-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-
-        .folder-card:hover { background: var(--bg-card-alt); }
-
-        .thread-row {
-            display: grid;
-            grid-template-columns: 50px 1fr 120px 200px;
-            padding: 15px;
+        .forum-header-row {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
-            align-items: center;
-        }
-
-        .thread-row:last-child { border-bottom: none; }
-
-        .prefix {
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #000;
-            display: inline-block;
-        }
-
-        .prefix-pending { background-color: var(--prefix-pending); }
-        .prefix-curator { background-color: var(--prefix-curator); color: white; }
-        .prefix-reviewing { background-color: var(--prefix-reviewing); color: white; }
-        .prefix-consideration { background-color: var(--prefix-consideration); color: white; }
-        .prefix-approved { background-color: var(--prefix-approved); color: white; }
-        .prefix-rejected { background-color: var(--prefix-rejected); color: white; }
-        .prefix-none { background-color: #4b5563; color: #f3f4f6; }
-
-        .card {
-            background: var(--bg-card);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group { margin-bottom: 15px; }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            background-color: #191c21;
-            color: var(--text-dark);
-            border: 1px solid #2d323b;
-            border-radius: 6px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .form-control:focus { border-color: #4b5563; }
-
-        .form-row-vertical {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .form-row-vertical:last-child { border-bottom: none; }
-
-        .form-label-side {
             font-weight: 600;
-            color: var(--text-dark);
+            display: grid;
+            grid-template-columns: 40px 1fr 150px 120px;
+            gap: 12px;
+            color: var(--text-muted);
             font-size: 13px;
         }
 
-        .form-label-side .sub-text {
-            color: var(--text-muted);
-            font-weight: normal;
+        .thread-row {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: 40px 1fr 150px 120px;
+            gap: 12px;
+            align-items: center;
+            transition: background 0.15s;
+        }
+
+        .thread-row:last-child {
+            border-bottom: none;
+        }
+
+        .thread-row:hover {
+            background-color: var(--bg-hover);
+        }
+
+        /* Role Badges & Prefixes */
+        .prefix {
+            padding: 2px 8px;
+            border-radius: 4px;
             font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .prefix-pending { background-color: #3b82f6; color: #fff; }
+        .prefix-curator { background-color: #8b5cf6; color: #fff; }
+        .prefix-reviewing { background-color: #eab308; color: #000; }
+        .prefix-consideration { background-color: #f97316; color: #fff; }
+        .prefix-approved { background-color: #22c55e; color: #fff; }
+        .prefix-rejected { background-color: #ef4444; color: #fff; }
+
+        .role-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        .role-curator-of-chilling { background-color: #8b5cf6; color: #fff; }
+        .role-administrator { background-color: #ef4444; color: #fff; }
+        .role-player { background-color: #64748b; color: #fff; }
+        .role-banned { background-color: #000; color: #ff4d4d; border: 1px solid #ff4d4d; }
+
+        .gmail-badge {
+            font-size: 11px;
+            color: var(--accent-yellow);
             display: block;
             margin-top: 2px;
         }
 
-        .field-note {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .prefix-dropdown-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .prefix-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            padding: 10px;
-            display: none;
-            z-index: 50;
-            width: 220px;
-        }
-
-        .prefix-option {
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .prefix-option:hover { opacity: 0.85; }
-
+        /* Thread Details & Posts */
         .post-card {
-            display: grid;
-            grid-template-columns: 180px 1fr;
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            background: var(--bg-card);
-            margin-bottom: 15px;
-            overflow: hidden;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 640px) {
+            .post-card {
+                flex-direction: row;
+            }
         }
 
         .post-author {
-            background: var(--bg-card-alt);
-            border-right: 1px solid var(--border-color);
-            padding: 15px;
+            padding: 16px;
+            background-color: rgba(0,0,0,0.15);
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 8px;
+            align-items: flex-start;
+            gap: 6px;
         }
 
-        .post-author .avatar {
-            width: 70px;
-            height: 70px;
-            font-size: 24px;
+        @media (min-width: 640px) {
+            .post-author {
+                width: 200px;
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                flex-shrink: 0;
+            }
         }
 
-        .role-badge {
-            background: #374151;
-            color: #f3f4f6;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
+        .post-content {
+            padding: 16px;
+            flex: 1;
         }
-
-        .role-badge.administrator { background: var(--role-admin); color: white; }
-        .role-badge.curator-of-chilling { background: var(--role-curator); color: white; }
-        .role-badge.banned { background: var(--role-banned); color: white; }
-
-        .post-content { padding: 15px; }
 
         .details-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            background: var(--bg-card-alt);
+            margin-bottom: 16px;
         }
 
         .details-table td {
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 1px solid var(--border-color);
             font-size: 13px;
         }
 
         .details-table td:first-child {
-            font-weight: bold;
             width: 180px;
+            background-color: rgba(0,0,0,0.2);
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
-        /* MODALS */
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-yellow);
+        }
+
+        /* Modals */
         .modal-overlay {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: none;
-            justify-content: center;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.75);
+            display: flex;
             align-items: center;
+            justify-content: center;
             z-index: 1000;
+            display: none;
         }
 
-        .modal {
-            background: #20242b;
+        .modal-body {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             width: 100%;
-            max-width: 480px;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #2e333d;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            max-width: 420px;
+            padding: 24px;
         }
 
         .modal-header {
-            background: transparent;
-            color: white;
-            padding: 20px 24px 10px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 16px;
         }
 
-        .modal-header h3 {
+        .close-btn {
+            cursor: pointer;
+            color: var(--text-muted);
             font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
         }
 
-        .modal-body { padding: 15px 24px; }
-
-        .modal-body label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #e5e7eb;
-            margin-bottom: 8px;
-        }
-
-        .modal-footer {
-            padding: 15px 24px 24px 24px;
-            background: transparent;
+        .folder-btn {
             display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            border-top: none;
-        }
-
-        .btn-modal-cancel {
-            background: transparent;
-            color: #ffffff;
-            border: 1px solid #374151;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .btn-modal-cancel:hover { border-color: #6b7280; }
-
-        .btn-modal-submit {
-            background-color: var(--accent-yellow);
-            color: #000000;
-            border: none;
-            padding: 10px 28px;
-            border-radius: 20px;
-            font-weight: 800;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-modal-submit:hover { background-color: var(--accent-yellow-hover); }
-
-        .admin-controls {
-            background: var(--bg-card-alt);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: flex;
-            gap: 10px;
             align-items: center;
-            border: 1px dashed var(--border-color);
-            flex-wrap: wrap;
+            gap: 12px;
+            padding: 16px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background 0.2s;
         }
 
-        .gmail-badge {
-            background: #1e293b;
-            color: #38bdf8;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            display: inline-block;
-            margin-top: 4px;
-            border: 1px solid #0284c7;
+        .folder-btn:hover {
+            background-color: var(--bg-hover);
         }
-
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- LANDING PAGE -->
-    <div id="landing-page">
-        <header class="landing-header">
-            <div class="landing-logo" onclick="navigateTo('landing')">
-                <i class="fa-solid fa-comments"></i>
-                <span>Chilling Forum</span>
+    <header>
+        <div class="logo" onclick="navigateTo('landing')">
+            <i class="fa-solid fa-shield-halved" style="color: var(--accent-yellow);"></i>
+            HV <span>Complaints</span>
+        </div>
+        <div class="nav-actions">
+            <div id="guest-nav">
+                <button class="btn" onclick="openModal('login-modal')"><i class="fa-solid fa-right-to-bracket"></i> Log In</button>
+                <button class="btn btn-yellow" onclick="openModal('register-modal')">Register</button>
             </div>
-            <nav class="landing-nav">
-                <a href="javascript:void(0)" onclick="navigateTo('forum-list')">How to start playing?</a>
-                <a href="javascript:void(0)" onclick="navigateTo('forum-list')">Forum</a>
-                <a href="javascript:void(0)" onclick="navigateTo('forum-list')">Technical Support</a>
-                <a href="javascript:void(0)" onclick="navigateTo('forum-list')">Donate</a>
-                <div class="online-counter">
-                    <span>4134</span> <i class="fa-solid fa-users"></i> TOTAL ONLINE
+            <div id="user-nav" class="hidden profile-menu-container">
+                <div class="user-avatar-btn" onclick="toggleProfileDropdown()">
+                    <div class="avatar" id="nav-avatar">U</div>
+                    <span id="user-display-name" style="font-size: 14px; font-weight: 500;">User</span>
+                    <i class="fa-solid fa-caret-down" style="font-size: 12px; color: var(--text-muted);"></i>
                 </div>
-                <button class="btn-purple" onclick="navigateTo('forum-list')">
-                    <i class="fa-solid fa-person-running"></i> Start Forum
-                </button>
-            </nav>
-        </header>
-
-        <section class="hero-section">
-            <h1 class="hero-title">GTA 5 INTERNATIONAL<br>ROLE PLAY SERVERS</h1>
-            <p class="hero-subtitle">We have been making regular updates for you for more than ten years</p>
-            <button class="btn-hero-yellow" onclick="navigateTo('forum-list')">
-                <i class="fa-solid fa-person-running"></i> Start Forum
-            </button>
-        </section>
-    </div>
-
-    <!-- MAIN FORUM APP -->
-    <div id="forum-app">
-        <!-- Header -->
-        <header>
-            <div class="logo" onclick="navigateTo('forum-list')">
-                <i class="fa-solid fa-comments"></i> Chilling Forum
-            </div>
-            <div class="auth-nav">
-                <div id="guest-nav">
-                    <button onclick="openModal('login-modal')"><i class="fa-solid fa-right-to-bracket"></i> Log in</button>
-                    <button onclick="openModal('register-modal')"><i class="fa-solid fa-user-plus"></i> Register</button>
-                </div>
-                <div id="user-nav" class="hidden">
-                    <div class="user-avatar-btn" onclick="toggleProfileDropdown()">
-                        <div class="avatar" id="nav-avatar" style="width:30px; height:30px; font-size:12px;">U</div>
-                        <span id="user-display-name"></span>
-                        <i class="fa-solid fa-caret-down"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Menu -->
-            <div class="profile-dropdown" id="profile-dropdown">
-                <div class="profile-dropdown-header">
-                    <div class="avatar" id="dropdown-avatar" style="width:50px; height:50px; font-size:20px;">U</div>
-                    <div>
-                        <h4 id="dropdown-username">User</h4>
-                        <span id="dropdown-role" class="role-badge">Player</span>
-                    </div>
-                </div>
-                <div class="dropdown-menu-items">
-                    <a href="javascript:void(0)" onclick="navigateTo('account-details'); toggleProfileDropdown();">Account details</a>
-                    <a href="javascript:void(0)" onclick="navigateTo('account-details'); toggleProfileDropdown();">Preferences</a>
-                    <a href="javascript:void(0)" onclick="logout(); toggleProfileDropdown();" style="color:#ef4444;">Log out</a>
-                </div>
-            </div>
-        </header>
-
-        <div class="container">
-            <div class="breadcrumbs">
-                <a href="javascript:void(0)" onclick="navigateTo('landing')">Home</a> &gt; 
-                <a href="javascript:void(0)" onclick="navigateTo('forum-list')">Forums</a> &gt; 
-                <span>Complaints about players</span>
-            </div>
-
-            <!-- VIEW: MAIN FORUM LIST -->
-            <div id="view-forum-list">
-                <div class="section-header">
-                    <h2>Complaints about players</h2>
-                    <button class="btn-yellow" onclick="handleNewThreadClick()">
-                        <i class="fa-solid fa-pen"></i> Post Thread
-                    </button>
-                </div>
-
-                <div class="forum-card" id="threads-container"></div>
-
-                <div class="folder-card" onclick="navigateTo('archive-folder')">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <i class="fa-solid fa-folder-closed" style="font-size: 32px; color: #8b5cf6;"></i>
-                        <div>
-                            <h4 style="font-size: 15px; color: var(--text-dark);">Archive Folder</h4>
-                            <span style="font-size: 12px; color: var(--text-muted);" id="archive-count-label">0 threads stored in archive</span>
+                <div class="dropdown-card" id="profile-dropdown">
+                    <div class="dropdown-header">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="avatar" id="dropdown-avatar">U</div>
+                            <div>
+                                <strong id="dropdown-username" style="display:block; font-size:14px;">User</strong>
+                                <span id="dropdown-role" class="role-badge role-player">Player</span>
+                            </div>
                         </div>
                     </div>
-                    <i class="fa-solid fa-chevron-right" style="color: var(--text-muted);"></i>
+                    <div class="dropdown-item" onclick="navigateTo('account-details'); toggleProfileDropdown();">
+                        <i class="fa-solid fa-user-gear"></i> Account Settings
+                    </div>
+                    <div class="dropdown-item" style="color:#ef4444;" onclick="logout(); toggleProfileDropdown();">
+                        <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- LANDING VIEW -->
+        <div id="landing-page">
+            <div class="landing-hero" style="width: 100%;">
+                <h1>Welcome to HV Complaints Portal</h1>
+                <p>Submit player reports, appeal bans, and communicate with community staff.</p>
+                <button class="btn btn-yellow" style="padding: 12px 24px; font-size: 16px;" onclick="navigateTo('forum-list')">
+                    Enter Complaints Forum <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- FORUM WRAPPER -->
+        <div id="forum-app" class="hidden">
+            <div class="forum-nav">
+                <div class="breadcrumb">
+                    <a onclick="navigateTo('landing')"><i class="fa-solid fa-house"></i> Home</a>
+                    <span>/</span>
+                    <span id="breadcrumb-current">Complaints Forum</span>
+                </div>
+                <button class="btn btn-yellow" onclick="handleNewThreadClick()"><i class="fa-solid fa-plus"></i> New Complaint</button>
+            </div>
+
+            <!-- VIEW 1: ACTIVE FORUM LIST -->
+            <div id="view-forum-list">
+                <div class="folder-btn" onclick="navigateTo('archive-folder')">
+                    <i class="fa-solid fa-folder-closed" style="font-size: 24px; color: var(--accent-yellow);"></i>
+                    <div>
+                        <strong>Archives Folder</strong>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="archive-count-label">0 threads stored in archive</div>
+                    </div>
+                </div>
+
+                <div class="forum-card">
+                    <div class="forum-header-row">
+                        <div></div>
+                        <div>COMPLAINT TITLE</div>
+                        <div>AUTHOR</div>
+                        <div>CREATED</div>
+                    </div>
+                    <div id="threads-container"></div>
                 </div>
             </div>
 
-            <!-- VIEW: ARCHIVE FOLDER CONTENT -->
+            <!-- VIEW 2: ARCHIVED THREADS -->
             <div id="view-archive-folder" class="hidden">
-                <div class="section-header">
-                    <h2 style="display:flex; align-items:center; gap:10px;">
-                        <i class="fa-solid fa-folder-open" style="color: #8b5cf6;"></i> Archive Folder
-                    </h2>
-                    <button class="form-control" style="width: auto;" onclick="navigateTo('forum-list')">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Forums
-                    </button>
+                <div style="margin-bottom: 12px;">
+                    <button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back to Complaints</button>
                 </div>
-
-                <div class="forum-card" id="archived-threads-container"></div>
+                <div class="forum-card">
+                    <div class="forum-header-row">
+                        <div></div>
+                        <div>ARCHIVED THREAD</div>
+                        <div>AUTHOR</div>
+                        <div>CREATED</div>
+                    </div>
+                    <div id="archived-threads-container"></div>
+                </div>
             </div>
 
-            <!-- VIEW: CREATE THREAD -->
+            <!-- VIEW 3: CREATE THREAD -->
             <div id="view-create-thread" class="hidden">
-                <div class="card">
-                    <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Post thread</h3>
+                <div class="forum-card" style="padding: 20px;">
+                    <h2 style="margin-bottom: 20px;">Create Complaint Thread</h2>
                     <form id="create-thread-form" onsubmit="submitThread(event)">
-                        
-                        <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
-                            <div class="prefix-dropdown-container">
-                                <button type="button" id="prefix-select-btn" class="prefix prefix-pending" onclick="togglePrefixMenu()" style="border:none; cursor:pointer; padding:8px 14px; font-size:12px;">
+                        <div class="form-group">
+                            <label>Prefix / Status Selection</label>
+                            <div style="position: relative;">
+                                <button type="button" class="prefix prefix-pending" id="prefix-select-btn" onclick="togglePrefixMenu()" style="cursor:pointer; padding: 6px 12px; font-size:12px;">
                                     Pending review <i class="fa-solid fa-caret-down"></i>
                                 </button>
-                                <div class="prefix-menu" id="prefix-menu">
-                                    <div style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:6px;">Complaint Prefixes</div>
-                                    <div class="prefix-option prefix-pending" onclick="selectPrefix('Pending review')">Pending review</div>
-                                    <div class="prefix-option prefix-curator" onclick="selectPrefix('For curator of chilling')">For curator of chilling</div>
-                                    <div class="prefix-option prefix-none" onclick="selectPrefix('(No prefix)')">(No prefix)</div>
-                                </div>
-                            </div>
-
-                            <input type="text" id="thread-title" class="form-control" style="flex:1;" placeholder="Title..." required>
-                        </div>
-
-                        <div style="background: var(--bg-card-alt); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 20px; margin-bottom: 20px;">
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Your ID:<span class="sub-text">Required</span></div>
-                                <div>
-                                    <input type="text" id="form-your-id" class="form-control" required>
-                                    <div class="field-note">In-game ID</div>
-                                </div>
-                            </div>
-
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Players nickname:<span class="sub-text">Required</span></div>
-                                <div>
-                                    <input type="text" id="form-nickname" class="form-control" required>
-                                    <div class="field-note">Enter your game nickname (e.g. Crazy_Moore)</div>
-                                </div>
-                            </div>
-
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Suspect ID:<span class="sub-text">Required</span></div>
-                                <div>
-                                    <input type="text" id="form-suspect-id" class="form-control" required>
-                                    <div class="field-note">Enter suspect ID</div>
-                                </div>
-                            </div>
-
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Date of violation:<span class="sub-text">Required</span></div>
-                                <div><input type="date" id="form-date" class="form-control" style="width: 200px;" required></div>
-                            </div>
-
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Discord ID:<span class="sub-text">Required</span></div>
-                                <div>
-                                    <input type="text" id="form-discord-id" class="form-control" required>
-                                    <div class="field-note">Enter Discord Username/ID</div>
-                                </div>
-                            </div>
-
-                            <div class="form-row-vertical">
-                                <div class="form-label-side">Proofs:<span class="sub-text">Required</span></div>
-                                <div>
-                                    <input type="text" id="form-proofs" class="form-control" required>
-                                    <div class="field-note">[TEXT OR LINK ALLOWED]</div>
+                                <div id="prefix-menu" class="dropdown-card" style="top: 35px; left: 0; width: 220px;">
+                                    <div class="dropdown-item" onclick="selectPrefix('Pending review')"><span class="prefix prefix-pending">Pending review</span></div>
+                                    <div class="dropdown-item" onclick="selectPrefix('For curator of chilling')"><span class="prefix prefix-curator">For curator of chilling</span></div>
+                                    <div class="dropdown-item" onclick="selectPrefix('Reviewing')"><span class="prefix prefix-reviewing">Reviewing</span></div>
+                                    <div class="dropdown-item" onclick="selectPrefix('On consideration')"><span class="prefix prefix-consideration">On consideration</span></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label style="font-weight:600; font-size:13px; margin-bottom:5px; display:block;">Complaint Details</label>
-                            <textarea id="thread-content" class="form-control" style="min-height:120px;" required></textarea>
+                            <label>Complaint Title</label>
+                            <input type="text" id="thread-title" class="form-control" placeholder="e.g. DM in Green Zone | ID 5021" required>
                         </div>
 
-                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                            <button type="button" class="form-control" style="width: auto;" onclick="navigateTo('forum-list')">Cancel</button>
-                            <button type="submit" class="btn-yellow">Post Thread</button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>Your ID</label>
+                                <input type="text" id="form-your-id" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Players Nickname</label>
+                                <input type="text" id="form-nickname" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label>Suspect ID</label>
+                                <input type="text" id="form-suspect-id" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Violation</label>
+                                <input type="date" id="form-date" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Discord ID</label>
+                            <input type="text" id="form-discord-id" class="form-control" placeholder="username#0000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Proofs (Imgur / YouTube Link)</label>
+                            <input type="url" id="form-proofs" class="form-control" placeholder="https://" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Detailed Description</label>
+                            <textarea id="thread-content" class="form-control" style="min-height: 100px;" required></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button type="button" class="btn" onclick="navigateTo('forum-list')">Cancel</button>
+                            <button type="submit" class="btn btn-yellow">Submit Complaint</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- VIEW: THREAD DETAIL -->
+            <!-- VIEW 4: THREAD DETAIL -->
             <div id="view-thread-detail" class="hidden">
-                <div id="thread-header-card" class="card" style="margin-bottom: 15px;"></div>
-
-                <!-- Staff Action Panel -->
-                <div id="admin-controls" class="admin-controls hidden">
-                    <strong style="color: #ef4444;"><i class="fa-solid fa-shield-halved"></i> Staff Controls:</strong>
-                    <span>Set Status:</span>
-                    <select id="admin-status-select" class="form-control" style="width: auto; padding: 4px 8px;" onchange="updateThreadStatus(this.value)">
-                        <option value="Pending review">Pending review</option>
-                        <option value="For curator of chilling">For curator of chilling</option>
-                        <option value="Reviewing">Reviewing</option>
-                        <option value="On consideration">On consideration</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
+                <div style="margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+                    <button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back to Forum</button>
                     
-                    <button class="btn-yellow" id="lock-btn" style="padding: 5px 10px; font-size: 11px;" onclick="toggleLockThread()">
-                        <i class="fa-solid fa-lock"></i> <span id="lock-btn-text">Toggle Lock</span>
-                    </button>
-
-                    <button class="btn-yellow" id="archive-btn" style="padding: 5px 10px; font-size: 11px; background:#8b5cf6; color:white;" onclick="toggleArchiveThread()">
-                        <i class="fa-solid fa-box-archive"></i> Move to Archive
-                    </button>
+                    <!-- Staff Management Panel -->
+                    <div id="admin-controls" class="hidden" style="display:flex; gap:8px;">
+                        <select id="admin-status-select" class="form-control" style="width: auto; padding: 4px 8px;" onchange="updateThreadStatus(this.value)">
+                            <option value="Pending review">Pending review</option>
+                            <option value="For curator of chilling">For curator of chilling</option>
+                            <option value="Reviewing">Reviewing</option>
+                            <option value="On consideration">On consideration</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                        <button class="btn" onclick="toggleLockThread()"><i class="fa-solid fa-lock"></i> <span id="lock-btn-text">Lock Thread</span></button>
+                        <button class="btn" id="archive-btn" onclick="toggleArchiveThread()"><i class="fa-solid fa-box-archive"></i> Move to Archive</button>
+                    </div>
                 </div>
 
+                <div class="forum-card" style="padding: 16px; margin-bottom: 16px;" id="thread-header-card"></div>
                 <div id="posts-container"></div>
-                <div id="reply-container" class="card"></div>
+
+                <!-- Reply Form -->
+                <div id="reply-container" class="forum-card" style="padding: 16px;"></div>
             </div>
 
-            <!-- VIEW: ACCOUNT DETAILS -->
+            <!-- VIEW 5: ACCOUNT DETAILS -->
             <div id="view-account-details" class="hidden">
-                <div class="card">
-                    <h3 style="margin-bottom:20px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">Account Details</h3>
-                    <div class="form-group">
-                        <label style="display:block; margin-bottom:5px;">Username</label>
-                        <input type="text" id="acc-username" class="form-control" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label style="display:block; margin-bottom:5px;">Email</label>
-                        <input type="text" id="acc-email" class="form-control" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label style="display:block; margin-bottom:5px;">Role</label>
-                        <input type="text" id="acc-role" class="form-control" disabled>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- MODALS -->
-    
-    <!-- LOGIN MODAL -->
-    <div id="login-modal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Log in</h3>
-                <i class="fa-solid fa-xmark" style="cursor:pointer; color:#9ca3af;" onclick="closeModal('login-modal')"></i>
-            </div>
-            <form id="login-form" onsubmit="handleLogin(event)">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Your email address</label>
-                        <input type="email" id="login-email" class="form-control" placeholder="example@gmail.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="login-password" class="form-control" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeModal('login-modal')">Cancel</button>
-                    <button type="submit" class="btn-modal-submit">LOG IN</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- REGISTER MODAL -->
-    <div id="register-modal" class="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Register Account</h3>
-                <i class="fa-solid fa-xmark" style="cursor:pointer; color:#9ca3af;" onclick="closeModal('register-modal')"></i>
-            </div>
-            <form id="register-form" onsubmit="handleRegister(event)">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Gmail Address</label>
-                        <input type="email" id="reg-gmail" class="form-control" placeholder="example@gmail.com" required>
-                    </div>
+                <div class="forum-card" style="padding: 20px; max-width: 500px; margin: 0 auto;">
+                    <h2 style="margin-bottom: 16px;"><i class="fa-solid fa-user-gear"></i> Account Settings</h2>
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" id="reg-username" class="form-control" required>
+                        <input type="text" id="acc-username" class="form-control" readonly>
                     </div>
                     <div class="form-group">
-                        <label>Discord ID</label>
-                        <input type="text" id="reg-discord" class="form-control" required>
+                        <label>Registered Gmail</label>
+                        <input type="text" id="acc-email" class="form-control" readonly>
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="reg-password" class="form-control" required>
+                        <label>Role Privilege</label>
+                        <input type="text" id="acc-role" class="form-control" readonly>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeModal('register-modal')">Cancel</button>
-                    <button type="submit" class="btn-modal-submit">REGISTER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal-body">
+            <div class="modal-header">
+                <h3>Log In to HV</h3>
+                <i class="fa-solid fa-xmark close-btn" onclick="closeModal('login-modal')"></i>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Gmail Address</label>
+                    <input type="email" id="login-email" class="form-control" required>
                 </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-yellow" style="width: 100%;">Sign In</button>
             </form>
         </div>
     </div>
 
-    <!-- BAN USER MODAL (CURATOR EXCLUSIVE) -->
-    <div id="ban-modal" class="modal-overlay">
-        <div class="modal">
+    <!-- MODAL: REGISTER -->
+    <div class="modal-overlay" id="register-modal">
+        <div class="modal-body">
             <div class="modal-header">
-                <h3 style="color:#ef4444;"><i class="fa-solid fa-ban"></i> Ban Forum Account</h3>
-                <i class="fa-solid fa-xmark" style="cursor:pointer; color:#9ca3af;" onclick="closeModal('ban-modal')"></i>
+                <h3>Register Account</h3>
+                <i class="fa-solid fa-xmark close-btn" onclick="closeModal('register-modal')"></i>
+            </div>
+            <form id="register-form" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>Gmail Address</label>
+                    <input type="email" id="reg-gmail" class="form-control" placeholder="example@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label>In-Game Username</label>
+                    <input type="text" id="reg-username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Discord Tag</label>
+                    <input type="text" id="reg-discord" class="form-control" placeholder="username#0000" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="reg-password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-yellow" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: BAN USER (CURATOR ONLY) -->
+    <div class="modal-overlay" id="ban-modal">
+        <div class="modal-body">
+            <div class="modal-header">
+                <h3 style="color:#ef4444;"><i class="fa-solid fa-ban"></i> Ban User</h3>
+                <i class="fa-solid fa-xmark close-btn" onclick="closeModal('ban-modal')"></i>
             </div>
             <form id="ban-form" onsubmit="confirmBanUser(event)">
-                <div class="modal-body">
-                    <p style="margin-bottom:15px; color:#9ca3af;" id="ban-target-text"></p>
-                    <div class="form-group">
-                        <label>Ban Duration</label>
-                        <input type="text" id="ban-time" class="form-control" placeholder="e.g. 7 Days, 30 Days, Permanent" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ban Reason</label>
-                        <textarea id="ban-reason" class="form-control" placeholder="Enter reason for suspension..." required></textarea>
-                    </div>
+                <p id="ban-target-text" style="font-size: 13px; margin-bottom: 12px; color: var(--text-muted);"></p>
+                <div class="form-group">
+                    <label>Ban Duration</label>
+                    <select id="ban-time" class="form-control">
+                        <option value="1 Day">1 Day</option>
+                        <option value="3 Days">3 Days</option>
+                        <option value="7 Days">7 Days</option>
+                        <option value="30 Days">30 Days</option>
+                        <option value="Permanent">Permanent</option>
+                    </select>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-modal-cancel" onclick="closeModal('ban-modal')">Cancel</button>
-                    <button type="submit" class="btn-modal-submit" style="background:#ef4444; color:white;">BAN ACCOUNT</button>
+                <div class="form-group">
+                    <label>Reason for Ban</label>
+                    <input type="text" id="ban-reason" class="form-control" placeholder="e.g. Forum Spam / Fake Proofs" required>
                 </div>
+                <button type="submit" class="btn btn-red" style="width: 100%;">Confirm Ban</button>
             </form>
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- Load Firebase App and Database SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEC_zUWaYg-neAKqCVcenx7TP7EJIzTnw",
+            authDomain: "chilling-1fb1a.firebaseapp.com",
+            databaseURL: "https://chilling-1fb1a-default-rtdb.firebaseio.com",
+            projectId: "chilling-1fb1a",
+            storageBucket: "chilling-1fb1a.firebasestorage.app",
+            messagingSenderId: "1050578648644",
+            appId: "1:1050578648644:web:026dd1288d23a95adb8611",
+            measurementId: "G-410Y57JB6W"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let currentUser = null;
         let selectedPrefix = "Pending review";
         let activeThreadId = null;
         let userToBan = null;
-
         let registeredUsers = [];
         let threads = [];
 
-        // BroadcastChannel to trigger instant cross-tab/cross-window updates
-        const forumChannel = new BroadcastChannel('chilling_forum_channel');
-        forumChannel.onmessage = async (event) => {
-            if (event.data === 'DATA_UPDATED') {
-                await loadAppData();
-                handleRoute();
+        // Realtime Syncing from Cloud Database
+        db.ref('forum_users').on('value', (snapshot) => {
+            const val = snapshot.val();
+            registeredUsers = val ? Object.values(val) : [];
+            
+            if (registeredUsers.length === 0) {
+                initDefaultUsers();
             }
-        };
+        });
 
-        // PERSISTENT INDEXEDDB STORAGE LAYER
-        const DB_NAME = "ChillingForumDB";
-        const DB_VERSION = 1;
-        let db = null;
+        db.ref('forum_threads').on('value', (snapshot) => {
+            const val = snapshot.val();
+            threads = val ? Object.values(val) : [];
+            
+            if (threads.length === 0) {
+                initDefaultThreads();
+            } else {
+                threads.sort((a, b) => b.id - a.id);
+                refreshActiveView();
+            }
+        });
 
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, DB_VERSION);
-                request.onerror = (event) => reject(event.target.error);
-                request.onsuccess = (event) => {
-                    db = event.target.result;
-                    resolve(db);
-                };
-                request.onupgradeneeded = (event) => {
-                    const database = event.target.result;
-                    if (!database.objectStoreNames.contains('users')) {
-                        database.createObjectStore('users', { keyPath: 'gmail' });
-                    }
-                    if (!database.objectStoreNames.contains('threads')) {
-                        database.createObjectStore('threads', { keyPath: 'id' });
-                    }
-                };
-            });
-        }
-
-        async function seedDefaultDataIfNeeded() {
-            const users = await dbGetAll('users');
-            const storedThreads = await dbGetAll('threads');
-
+        function initDefaultUsers() {
             const defaultUsers = [
                 { gmail: "rmercer534@gmail.com", username: "RMercer", discord: "rmercer#0001", password: "101Rex20", role: "Curator of chilling", isBanned: false },
                 { gmail: "admin@gmail.com", username: "SystemAdmin", discord: "admin#0001", password: "admin123", role: "Administrator", isBanned: false },
                 { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "player123", role: "Player", isBanned: false }
             ];
-
-            const defaultThreads = [
-                {
-                    id: 1,
-                    title: "DM in Green Zone",
-                    author: "Crazy_Moore",
-                    authorRole: "Player",
-                    authorGmail: "crazy_player@gmail.com",
-                    prefix: "Pending review",
-                    isLocked: false,
-                    isArchived: false,
-                    details: {
-                        yourId: "1024",
-                        nickname: "Crazy_Moore",
-                        suspectId: "5021",
-                        date: "2026-03-29",
-                        discordId: "moore#0001",
-                        proofs: "https://imgur.com/example"
-                    },
-                    posts: [
-                        {
-                            author: "Crazy_Moore",
-                            role: "Player",
-                            gmail: "crazy_player@gmail.com",
-                            content: "Player killed me without any roleplay reason near the central bank.",
-                            date: new Date(Date.now() - 3600000).toISOString()
-                        }
-                    ]
-                }
-            ];
-
-            if (users.length === 0) {
-                for (const u of defaultUsers) {
-                    await dbPut('users', u);
-                }
-            }
-
-            if (storedThreads.length === 0) {
-                for (const t of defaultThreads) {
-                    await dbPut('threads', t);
-                }
-            }
-        }
-
-        function dbGetAll(storeName) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(storeName, 'readonly');
-                const store = transaction.objectStore(storeName);
-                const request = store.getAll();
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event) => reject(event.target.error);
+            defaultUsers.forEach(u => {
+                const key = u.gmail.replace(/\./g, '_');
+                db.ref('forum_users/' + key).set(u);
             });
         }
 
-        function dbPut(storeName, item) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(storeName, 'readwrite');
-                const store = transaction.objectStore(storeName);
-                const request = store.put(item);
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = (event) => reject(event.target.error);
-            });
+        function initDefaultThreads() {
+            const defaultThread = {
+                id: 1,
+                title: "DM in Green Zone",
+                author: "Crazy_Moore",
+                authorRole: "Player",
+                authorGmail: "crazy_player@gmail.com",
+                prefix: "Pending review",
+                isLocked: false,
+                isArchived: false,
+                details: {
+                    yourId: "1024",
+                    nickname: "Crazy_Moore",
+                    suspectId: "5021",
+                    date: "2026-03-29",
+                    discordId: "moore#0001",
+                    proofs: "https://imgur.com/example"
+                },
+                posts: [
+                    {
+                        author: "Crazy_Moore",
+                        role: "Player",
+                        gmail: "crazy_player@gmail.com",
+                        content: "Player killed me without any roleplay reason near the central bank.",
+                        date: new Date(Date.now() - 3600000).toISOString()
+                    }
+                ]
+            };
+            db.ref('forum_threads/' + defaultThread.id).set(defaultThread);
         }
 
-        async function loadAppData() {
-            registeredUsers = await dbGetAll('users');
-            threads = await dbGetAll('threads');
-            threads.sort((a, b) => b.id - a.id);
+        function saveUserToDB(user) {
+            const key = user.gmail.replace(/\./g, '_');
+            db.ref('forum_users/' + key).set(user);
         }
 
-        async function saveData() {
-            for (const u of registeredUsers) {
-                await dbPut('users', u);
+        function saveThreadToDB(thread) {
+            db.ref('forum_threads/' + thread.id).set(thread);
+        }
+
+        function refreshActiveView() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash === 'forum-list' || !hash) {
+                renderThreads();
+            } else if (hash === 'archive-folder') {
+                renderArchivedThreads();
+            } else if (hash.startsWith('thread-') && activeThreadId) {
+                const currentThread = threads.find(t => t.id === activeThreadId);
+                if (currentThread) renderPosts(currentThread);
             }
-            for (const t of threads) {
-                await dbPut('threads', t);
-            }
-            forumChannel.postMessage('DATA_UPDATED');
         }
 
-        // BROWSER HISTORY ROUTER
-        window.addEventListener('popstate', () => {
-            handleRoute();
-        });
-
-        // Automatically sync and refresh when switching back to a tab
-        window.addEventListener('focus', async () => {
-            await loadAppData();
-            handleRoute();
-        });
+        window.addEventListener('popstate', handleRoute);
 
         function handleRoute() {
             const hash = window.location.hash.replace('#', '');
@@ -1193,30 +887,18 @@
             window.location.hash = path;
         }
 
-        // INITIALIZE APPLICATION & DATABASE ON LOAD
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                await initDB();
-                await seedDefaultDataIfNeeded();
-                await loadAppData();
-
-                const savedEmail = localStorage.getItem('chilling_forum_logged_email');
-                if (savedEmail) {
-                    const foundUser = registeredUsers.find(u => u.gmail === savedEmail);
-                    if (foundUser) {
-                        if (foundUser.isBanned) {
-                            localStorage.removeItem('chilling_forum_logged_email');
-                            currentUser = null;
-                        } else {
-                            currentUser = foundUser;
-                            updateAuthUI();
-                        }
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = localStorage.getItem('chilling_forum_logged_email');
+            if (savedEmail) {
+                db.ref('forum_users/' + savedEmail.replace(/\./g, '_')).once('value', snapshot => {
+                    const foundUser = snapshot.val();
+                    if (foundUser && !foundUser.isBanned) {
+                        currentUser = foundUser;
+                        updateAuthUI();
                     }
-                }
-                handleRoute();
-            } catch (err) {
-                console.error("Database initialization failed:", err);
+                });
             }
+            handleRoute();
         });
 
         function timeAgo(dateString) {
@@ -1258,16 +940,14 @@
             document.getElementById('landing-page').style.display = 'flex';
         }
 
-        async function showForumListView() {
-            await loadAppData();
+        function showForumListView() {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-forum-list').classList.remove('hidden');
             renderThreads();
         }
 
-        async function showArchiveView() {
-            await loadAppData();
+        function showArchiveView() {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-archive-folder').classList.remove('hidden');
@@ -1291,8 +971,7 @@
             }
         }
 
-        async function showThreadDetailView(id) {
-            await loadAppData();
+        function showThreadDetailView(id) {
             hideAllViews();
             document.getElementById('forum-app').style.display = 'block';
             document.getElementById('view-thread-detail').classList.remove('hidden');
@@ -1309,7 +988,6 @@
                 </div>
             `;
 
-            // STAFF CONTROLS (Only visible to Curator or Administrator)
             const adminControls = document.getElementById('admin-controls');
             const isStaff = currentUser && (currentUser.role === 'Curator of chilling' || currentUser.role === 'Administrator');
             
@@ -1410,12 +1088,8 @@
             document.getElementById('prefix-menu').style.display = 'none';
         }
 
-        async function submitThread(e) {
+        function submitThread(e) {
             e.preventDefault();
-            if (currentUser && currentUser.isBanned) {
-                alert("Your account is banned.");
-                return;
-            }
 
             const newThread = {
                 id: Date.now(),
@@ -1445,11 +1119,7 @@
                 ]
             };
 
-            await dbPut('threads', newThread);
-            await loadAppData();
-            
-            // Send broadcast event to other open tabs
-            forumChannel.postMessage('DATA_UPDATED');
+            saveThreadToDB(newThread);
 
             document.getElementById('create-thread-form').reset();
             navigateTo('forum-list');
@@ -1537,21 +1207,14 @@
             }
         }
 
-        async function submitReply(e) {
+        function submitReply(e) {
             e.preventDefault();
             const thread = threads.find(t => t.id === activeThreadId);
             if (!thread) return;
 
-            const isStaff = currentUser && (currentUser.role === 'Curator of chilling' || currentUser.role === 'Administrator');
-            
-            if (thread.isLocked && !isStaff) {
-                alert("This thread is not open for further replies.");
-                return;
-            }
-
-            if (currentUser && currentUser.isBanned) return;
-
             const replyContent = document.getElementById('reply-content').value;
+            if (!thread.posts) thread.posts = [];
+            
             thread.posts.push({
                 author: currentUser.username,
                 role: currentUser.role,
@@ -1560,62 +1223,42 @@
                 date: new Date().toISOString()
             });
 
-            await dbPut('threads', thread);
-            await loadAppData();
-            
-            forumChannel.postMessage('DATA_UPDATED');
-            renderPosts(thread);
+            saveThreadToDB(thread);
         }
 
-        // STAFF ACTIONS (Decision Controls - Only Curator & Admin)
-        async function updateThreadStatus(status) {
-            if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
+        function updateThreadStatus(status) {
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
                 thread.prefix = status;
-                await dbPut('threads', thread);
-                await loadAppData();
-                forumChannel.postMessage('DATA_UPDATED');
-                showThreadDetailView(thread.id);
+                saveThreadToDB(thread);
             }
         }
 
-        async function toggleLockThread() {
-            if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
+        function toggleLockThread() {
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
                 thread.isLocked = !thread.isLocked;
-                await dbPut('threads', thread);
-                await loadAppData();
-                forumChannel.postMessage('DATA_UPDATED');
-                showThreadDetailView(thread.id);
+                saveThreadToDB(thread);
             }
         }
 
-        async function toggleArchiveThread() {
-            if (!currentUser || (currentUser.role !== 'Curator of chilling' && currentUser.role !== 'Administrator')) return;
+        function toggleArchiveThread() {
             const thread = threads.find(t => t.id === activeThreadId);
             if (thread) {
                 thread.isArchived = !thread.isArchived;
-                await dbPut('threads', thread);
-                await loadAppData();
-                forumChannel.postMessage('DATA_UPDATED');
+                saveThreadToDB(thread);
                 navigateTo(thread.isArchived ? 'archive-folder' : 'forum-list');
             }
         }
 
-        // BAN SYSTEM
         function openBanModal(gmail, username) {
-            if (!currentUser || currentUser.role !== 'Curator of chilling') return;
             userToBan = registeredUsers.find(u => u.gmail === gmail);
             document.getElementById('ban-target-text').innerText = `Suspending user: ${username} (${gmail})`;
             openModal('ban-modal');
         }
 
-        async function confirmBanUser(e) {
+        function confirmBanUser(e) {
             e.preventDefault();
-            if (!currentUser || currentUser.role !== 'Curator of chilling') return;
-
             const time = document.getElementById('ban-time').value;
             const reason = document.getElementById('ban-reason').value;
 
@@ -1624,95 +1267,78 @@
                 userToBan.role = 'Banned';
                 userToBan.banDetails = { time, reason };
                 
+                saveUserToDB(userToBan);
+
                 threads.forEach(t => {
+                    let updated = false;
                     t.posts.forEach(p => {
                         if (p.gmail === userToBan.gmail) {
                             p.role = 'Banned';
+                            updated = true;
                         }
                     });
+                    if (updated) saveThreadToDB(t);
                 });
 
-                await saveData();
-                alert(`User ${userToBan.username} (${userToBan.gmail}) has been banned.`);
-
+                alert(`User ${userToBan.username} banned.`);
                 closeModal('ban-modal');
-                document.getElementById('ban-form').reset();
-
-                if (activeThreadId) {
-                    const currentThread = threads.find(t => t.id === activeThreadId);
-                    if (currentThread) renderPosts(currentThread);
-                }
             }
         }
 
-        async function unbanUser(gmail) {
-            if (!currentUser || currentUser.role !== 'Curator of chilling') {
-                alert("Only Curator of chilling can unban accounts!");
-                return;
-            }
-
+        function unbanUser(gmail) {
             const targetUser = registeredUsers.find(u => u.gmail === gmail);
             if (targetUser) {
                 targetUser.isBanned = false;
                 targetUser.role = 'Player';
                 delete targetUser.banDetails;
 
+                saveUserToDB(targetUser);
+
                 threads.forEach(t => {
+                    let updated = false;
                     t.posts.forEach(p => {
                         if (p.gmail === targetUser.gmail) {
                             p.role = 'Player';
+                            updated = true;
                         }
                     });
+                    if (updated) saveThreadToDB(t);
                 });
 
-                await saveData();
-                alert(`User ${targetUser.username} (${targetUser.gmail}) has been unbanned!`);
-
-                if (activeThreadId) {
-                    const currentThread = threads.find(t => t.id === activeThreadId);
-                    if (currentThread) renderPosts(currentThread);
-                }
+                alert(`User ${targetUser.username} unbanned.`);
             }
         }
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        /* REGISTRATION */
-        async function handleRegister(e) {
+        function handleRegister(e) {
             e.preventDefault();
             const gmail = document.getElementById('reg-gmail').value.trim().toLowerCase();
             const username = document.getElementById('reg-username').value.trim();
             const discord = document.getElementById('reg-discord').value.trim();
             const password = document.getElementById('reg-password').value;
 
-            const existingUser = registeredUsers.find(u => u.gmail === gmail);
-            if (existingUser) {
-                alert("An account with this Gmail address already exists!");
+            if (registeredUsers.find(u => u.gmail === gmail)) {
+                alert("Account already exists!");
                 return;
             }
 
             let role = 'Player';
-            if (gmail === 'rmercer534@gmail.com') {
-                role = 'Curator of chilling';
-            } else if (gmail.includes('admin')) {
-                role = 'Administrator';
-            }
+            if (gmail === 'rmercer534@gmail.com') role = 'Curator of chilling';
+            else if (gmail.includes('admin')) role = 'Administrator';
 
             const newUser = { gmail, username, discord, password, role, isBanned: false };
-            registeredUsers.push(newUser);
+            saveUserToDB(newUser);
             
             currentUser = newUser;
             localStorage.setItem('chilling_forum_logged_email', newUser.gmail);
-            await saveData();
             
             updateAuthUI();
             document.getElementById('register-form').reset();
             closeModal('register-modal');
-            alert("Registration successful!");
         }
 
-        /* LOGIN HANDLER */
         function handleLogin(e) {
             e.preventDefault();
             const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
@@ -1721,15 +1347,12 @@
             const user = registeredUsers.find(u => u.gmail === emailInput && u.password === passwordInput);
 
             if (!user) {
-                alert("Invalid Gmail or password. Please check your credentials.");
+                alert("Invalid credentials.");
                 return;
             }
 
             if (user.isBanned) {
-                const reason = (user.banDetails && user.banDetails.reason) ? user.banDetails.reason : "Violation of forum rules";
-                const time = (user.banDetails && user.banDetails.time) ? user.banDetails.time : "Permanent";
-                
-                alert(`ACCOUNT BANNED!\n\nReason: ${reason}\nBan Duration: ${time}\n\nYou are not allowed to log into this account.`);
+                alert("ACCOUNT BANNED");
                 return;
             }
 
