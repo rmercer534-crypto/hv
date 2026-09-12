@@ -1138,12 +1138,10 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const savedEmail = localStorage.getItem('pythons_family_logged_email');
-            if (savedEmail) {
-                const foundUser = registeredUsers.find(u => u.gmail.toLowerCase() === savedEmail.toLowerCase());
-                if (foundUser && !foundUser.isBanned) currentUser = foundUser;
-                else localStorage.removeItem('pythons_family_logged_email');
-            }
+            // Do NOT persist login sessions between website openings.
+            // Every fresh page load starts logged out and requires Login/Register.
+            currentUser = null;
+            localStorage.removeItem('pythons_family_logged_email');
 
             updateAuthUI();
             updatePrefixMenuForRole();
