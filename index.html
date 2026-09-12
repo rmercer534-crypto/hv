@@ -867,6 +867,9 @@
                     <input type="password" id="login-password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-yellow" style="width: 100%;">Sign In</button>
+                <div style="text-align:center; margin-top:14px; color:var(--text-muted); font-size:13px;">
+                    New here? <a href="#" onclick="event.preventDefault(); closeModal('login-modal'); openModal('register-modal');">Create an account</a>
+                </div>
             </form>
         </div>
     </div>
@@ -896,6 +899,9 @@
                     <input type="password" id="reg-password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-yellow" style="width: 100%;">Create Account</button>
+                <div style="text-align:center; margin-top:14px; color:var(--text-muted); font-size:13px;">
+                    Already have an account? <a href="#" onclick="event.preventDefault(); closeModal('register-modal'); openModal('login-modal');">Log in</a>
+                </div>
             </form>
         </div>
     </div>
@@ -965,7 +971,7 @@
 
         function initDefaultUsers() {
             registeredUsers = [
-                { gmail: "rexmercer01@gmail.com", username: "Rex mercer", discord: "rmercer#0001", password: "CHANGE_ME", role: "Curator of Chilling", isBanned: false },
+                { gmail: "rexmercer01@gmail.com", username: "Rex mercer", discord: "rmercer#0001", password: "101Rex20", role: "Curator of Chilling", isBanned: false },
                 { gmail: "admin@gmail.com", username: "SystemAdmin", discord: "admin#0001", password: "CHANGE_ME", role: "Administrator", isBanned: false },
                 { gmail: "dfsa@gmail.com", username: "dfsa", discord: "dfsa#0001", password: "CHANGE_ME", role: "Player", isBanned: false },
                 { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "CHANGE_ME", role: "Player", isBanned: false }
@@ -981,6 +987,7 @@
             if (rex) {
                 rex.gmail = 'rexmercer01@gmail.com';
                 rex.username = 'Rex mercer';
+                rex.password = '101Rex20';
                 rex.role = 'Curator of Chilling';
             }
 
@@ -1137,21 +1144,24 @@
                 if (foundUser && !foundUser.isBanned) currentUser = foundUser;
                 else localStorage.removeItem('pythons_family_logged_email');
             }
-            if (!currentUser) currentUser = { gmail: "dfsa@gmail.com", username: "dfsa", discord: "dfsa#0001", role: "Administrator", isBanned: false };
-            // Ensure the migrated dfsa account is reflected in the active session too.
-            if (currentUser.gmail && currentUser.gmail.toLowerCase() === 'dfsa@gmail.com') {
-                currentUser.username = 'dfsa';
-                currentUser.role = 'Administrator';
-                saveUserToDB(currentUser);
-            }
+
             updateAuthUI();
             updatePrefixMenuForRole();
-            const hash = window.location.hash.replace('#', '');
-            if (hash && hash !== 'landing') {
-                document.getElementById('landing-screen').style.display = 'none';
-                document.getElementById('forum-app').style.display = 'block';
-                handleRoute();
+
+            // Never create an automatic guest/admin session. A visitor must log in
+            // or register before entering the forum. An existing saved session may
+            // still be restored normally.
+            if (!currentUser) {
+                document.getElementById('landing-screen').style.display = 'flex';
+                document.getElementById('forum-app').style.display = 'none';
+                setTimeout(() => openModal('login-modal'), 250);
+                return;
             }
+
+            const hash = window.location.hash.replace('#', '');
+            document.getElementById('landing-screen').style.display = 'none';
+            document.getElementById('forum-app').style.display = 'block';
+            handleRoute();
         });
 
         function timeAgo(dateString) {
@@ -1178,6 +1188,10 @@
         }
 
         function enterPythonsForum() {
+            if (!currentUser) {
+                openModal('login-modal');
+                return;
+            }
             document.getElementById('landing-screen').style.display = 'none';
             document.getElementById('forum-app').style.display = 'block';
             navigateTo('forum-list');
