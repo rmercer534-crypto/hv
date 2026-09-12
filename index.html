@@ -1138,17 +1138,32 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Do NOT persist login sessions between website openings.
-            // Every fresh page load starts logged out and requires Login/Register.
+            // Require login/register on a fresh website opening, but keep the
+            // current login during normal page refreshes caused by forum actions.
+            // sessionStorage survives reloads but is cleared when the browser tab
+            // is closed, so a new visit must authenticate again.
             currentUser = null;
-            localStorage.removeItem('pythons_family_logged_email');
+            const sessionEmail = sessionStorage.getItem('pythons_family_session_email');
+            if (sessionEmail) {
+                const foundUser = registeredUsers.find(u =>
+                    u.gmail && u.gmail.toLowerCase() === sessionEmail.toLowerCase()
+                );
+                if (foundUser && !foundUser.isBanned) {
+                    currentUser = foundUser;
+                    localStorage.setItem('pythons_family_logged_email', foundUser.gmail);
+                } else {
+                    sessionStorage.removeItem('pythons_family_session_email');
+                    localStorage.removeItem('pythons_family_logged_email');
+                }
+            } else {
+                localStorage.removeItem('pythons_family_logged_email');
+            }
 
             updateAuthUI();
             updatePrefixMenuForRole();
 
             // Never create an automatic guest/admin session. A visitor must log in
-            // or register before entering the forum. An existing saved session may
-            // still be restored normally.
+            // or register before entering the forum.
             if (!currentUser) {
                 document.getElementById('landing-screen').style.display = 'flex';
                 document.getElementById('forum-app').style.display = 'none';
@@ -1755,6 +1770,7 @@
             
             currentUser = newUser;
             localStorage.setItem('pythons_family_logged_email', newUser.gmail);
+            sessionStorage.setItem('pythons_family_session_email', newUser.gmail);
             
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -1781,6 +1797,7 @@
 
             currentUser = user;
             localStorage.setItem('pythons_family_logged_email', user.gmail);
+            sessionStorage.setItem('pythons_family_session_email', user.gmail);
             updateAuthUI();
             updatePrefixMenuForRole();
             document.getElementById('login-form').reset();
@@ -1790,6 +1807,7 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem('pythons_family_logged_email');
+            sessionStorage.removeItem('pythons_family_session_email');
             updateAuthUI();
             navigateTo('forum-list');
         }
