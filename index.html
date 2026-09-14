@@ -1065,13 +1065,33 @@
         }
         function persistThreadsLocally() { try { localStorage.setItem(LOCAL_THREADS_KEY, JSON.stringify(threads)); } catch (e) { console.error(e); } }
 
+        // Return the most recent post/reply in a thread.
+        // The forum list uses this post for the author/time shown on the outside row.
+        function getLastThreadPost(thread) {
+            if (!thread || !Array.isArray(thread.posts) || thread.posts.length === 0) {
+                return {
+                    author: thread?.author || 'Unknown',
+                    role: thread?.authorRole || 'Player',
+                    gmail: thread?.authorGmail || '',
+                    date: new Date(0).toISOString()
+                };
+            }
+            return thread.posts[thread.posts.length - 1] || thread.posts[0];
+        }
+
         // IMPORTANT threads are automatically pinned to the top of the forum.
-        // All other threads remain below them in newest-first order.
+        // All other threads are ordered by their latest activity/reply.
         function sortThreadsForDisplay(list) {
             return list.sort((a, b) => {
                 const aImportant = String(a.prefix || '').toUpperCase() === 'IMPORTANT';
                 const bImportant = String(b.prefix || '').toUpperCase() === 'IMPORTANT';
                 if (aImportant !== bImportant) return aImportant ? -1 : 1;
+
+                const aLast = getLastThreadPost(a);
+                const bLast = getLastThreadPost(b);
+                const aTime = new Date(aLast.date || 0).getTime();
+                const bTime = new Date(bLast.date || 0).getTime();
+                if (aTime !== bTime) return bTime - aTime;
                 return Number(b.id) - Number(a.id);
             });
         }
@@ -1359,21 +1379,29 @@
                 return;
             }
 
-            container.innerHTML = activeThreads.map(t => `
-                <div class="thread-row" onclick="navigateTo('thread-detail', ${t.id})" style="cursor:pointer;">
-                    <div class="thread-left">
-                        <i class="fa-solid fa-comments" style="color:var(--text-muted); font-size:20px;"></i>
-                        <span class="prefix ${getPrefixClass(t.prefix)}">${t.prefix}</span>
-                        ${String(t.prefix || '').toUpperCase() === 'IMPORTANT' ? '<i class="fa-solid fa-thumbtack important-pin" title="Pinned automatically"></i>' : ''}
-                        <strong style="font-size: 15px;">${t.title}</strong>
-                        ${t.isLocked ? '<i class="fa-solid fa-lock" style="color:var(--accent-yellow); margin-left:5px;"></i>' : ''}
+            container.innerHTML = activeThreads.map(t => {
+                const lastPost = getLastThreadPost(t);
+                const lastAuthor = lastPost.author || t.author || 'Unknown';
+                const lastRole = lastPost.role || t.authorRole || 'Player';
+                const lastDate = lastPost.date || t.posts?.[0]?.date || new Date(0).toISOString();
+                const isKanav = lastAuthor === 'Kanav Arora' && lastRole === 'Curator of Pythons';
+
+                return `
+                    <div class="thread-row" onclick="navigateTo('thread-detail', ${t.id})" style="cursor:pointer;">
+                        <div class="thread-left">
+                            <i class="fa-solid fa-comments" style="color:var(--text-muted); font-size:20px;"></i>
+                            <span class="prefix ${getPrefixClass(t.prefix)}">${t.prefix}</span>
+                            ${String(t.prefix || '').toUpperCase() === 'IMPORTANT' ? '<i class="fa-solid fa-thumbtack important-pin" title="Pinned automatically"></i>' : ''}
+                            <strong style="font-size: 15px;">${t.title}</strong>
+                            ${t.isLocked ? '<i class="fa-solid fa-lock" style="color:var(--accent-yellow); margin-left:5px;"></i>' : ''}
+                        </div>
+                        <div class="thread-right">
+                            <span class="thread-author ${isKanav ? 'kanav-rainbow-username' : ''}" title="Last reply by ${lastAuthor}">${lastAuthor}</span>
+                            <span class="thread-time">${timeAgo(lastDate)}</span>
+                        </div>
                     </div>
-                    <div class="thread-right">
-                        <span class="thread-author ${t.author === 'Kanav Arora' && t.authorRole === 'Curator of Pythons' ? 'kanav-rainbow-username' : ''}">${t.author}</span>
-                        <span class="thread-time">${timeAgo(t.posts[0].date)}</span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderArchivedThreads() {
@@ -1385,19 +1413,27 @@
                 return;
             }
 
-            container.innerHTML = archived.map(t => `
-                <div class="thread-row" onclick="navigateTo('thread-detail', ${t.id})" style="cursor:pointer;">
-                    <div class="thread-left">
-                        <i class="fa-solid fa-box-archive" style="color:var(--text-muted); font-size:20px;"></i>
-                        <span class="prefix ${getPrefixClass(t.prefix)}">${t.prefix}</span>
-                        <strong style="font-size: 15px;">${t.title}</strong>
+            container.innerHTML = archived.map(t => {
+                const lastPost = getLastThreadPost(t);
+                const lastAuthor = lastPost.author || t.author || 'Unknown';
+                const lastRole = lastPost.role || t.authorRole || 'Player';
+                const lastDate = lastPost.date || t.posts?.[0]?.date || new Date(0).toISOString();
+                const isKanav = lastAuthor === 'Kanav Arora' && lastRole === 'Curator of Pythons';
+
+                return `
+                    <div class="thread-row" onclick="navigateTo('thread-detail', ${t.id})" style="cursor:pointer;">
+                        <div class="thread-left">
+                            <i class="fa-solid fa-box-archive" style="color:var(--text-muted); font-size:20px;"></i>
+                            <span class="prefix ${getPrefixClass(t.prefix)}">${t.prefix}</span>
+                            <strong style="font-size: 15px;">${t.title}</strong>
+                        </div>
+                        <div class="thread-right">
+                            <span class="thread-author ${isKanav ? 'kanav-rainbow-username' : ''}" title="Last reply by ${lastAuthor}">${lastAuthor}</span>
+                            <span class="thread-time">${timeAgo(lastDate)}</span>
+                        </div>
                     </div>
-                    <div class="thread-right">
-                        <span class="thread-author ${t.author === 'Kanav Arora' && t.authorRole === 'Curator of Pythons' ? 'kanav-rainbow-username' : ''}">${t.author}</span>
-                        <span class="thread-time">${timeAgo(t.posts[0].date)}</span>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function getPrefixClass(prefix) {
