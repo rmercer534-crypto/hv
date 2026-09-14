@@ -1908,64 +1908,111 @@
         }
 
         async function confirmBanUser(e) {
-            e.preventDefault();
-            if (!canBanOrUnbanUsers()) {
-                alert('Only Administrator and Curator of Pythons can ban or unban users.');
-                return;
-            }
-            const time = document.getElementById('ban-time').value;
-            const reason = document.getElementById('ban-reason').value.trim();
+            if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-            if (userToBan) {
+            try {
+                if (!canBanOrUnbanUsers()) {
+                    alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                    return false;
+                }
+
+                if (!userToBan) {
+                    alert('No user was selected for banning. Please close this window and click Ban User again.');
+                    return false;
+                }
+
+                const timeEl = document.getElementById('ban-time');
+                const reasonEl = document.getElementById('ban-reason');
+                const time = timeEl ? timeEl.value : 'Permanent';
+                const reason = reasonEl ? reasonEl.value.trim() : '';
+
+                if (!reason) {
+                    if (reasonEl) reasonEl.focus();
+                    alert('Please enter a reason for the ban.');
+                    return false;
+                }
+
+                const targetEmail = String(userToBan.gmail || '').trim().toLowerCase();
+                const targetUsername = userToBan.username || 'User';
+
+                // Update the account immediately in local storage.
                 userToBan.isBanned = true;
                 userToBan.role = 'Banned';
-                userToBan.banDetails = { time, reason };
-                
+                userToBan.banDetails = { time, reason, bannedAt: new Date().toISOString() };
                 saveUserToDB(userToBan);
 
+                // Update every post belonging to this account.
                 for (const t of threads) {
+                    if (!Array.isArray(t.posts)) continue;
                     let updated = false;
-                    t.posts.forEach(p => {
-                        if (p.gmail === userToBan.gmail) {
-                            p.role = 'Banned';
+                    t.posts.forEach(post => {
+                        const postEmail = String(post.gmail || '').trim().toLowerCase();
+                        const sameUser = targetEmail && postEmail === targetEmail ||
+                            (!targetEmail && String(post.author || '') === String(targetUsername));
+                        if (sameUser) {
+                            post.role = 'Banned';
+                            post.banDetails = { time, reason };
                             updated = true;
                         }
                     });
-                    if (updated) await saveThreadToDB(t);
+                    if (updated) {
+                        await saveThreadToDB(t, true);
+                    }
                 }
 
-                alert(`User ${userToBan.username} banned.`);
+                // Make sure the local user list is persisted even if the shared thread API is unavailable.
+                saveUsersLocally();
+                userToBan = null;
                 closeModal('ban-modal');
+                alert(`User ${targetUsername} has been banned for ${time}.\nReason: ${reason}`);
                 reloadWebsite();
+                return false;
+            } catch (error) {
+                console.error('Ban user failed:', error);
+                alert('The ban could not be completed.\n\n' + (error && error.message ? error.message : error));
+                return false;
             }
         }
 
         async function unbanUser(gmail) {
-            if (!canBanOrUnbanUsers()) {
-                alert('Only Administrator and Curator of Pythons can ban or unban users.');
-                return;
-            }
-            const targetUser = registeredUsers.find(u => u.gmail === gmail);
-            if (targetUser) {
+            try {
+                if (!canBanOrUnbanUsers()) {
+                    alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                    return;
+                }
+
+                const normalizedGmail = String(gmail || '').trim().toLowerCase();
+                const targetUser = registeredUsers.find(u => String(u.gmail || '').trim().toLowerCase() === normalizedGmail);
+                if (!targetUser) {
+                    alert('The user account could not be found.');
+                    return;
+                }
+
                 targetUser.isBanned = false;
+                // Restore the normal player role when a banned player is unbanned.
                 targetUser.role = 'Player';
                 delete targetUser.banDetails;
-
                 saveUserToDB(targetUser);
 
                 for (const t of threads) {
+                    if (!Array.isArray(t.posts)) continue;
                     let updated = false;
-                    t.posts.forEach(p => {
-                        if (p.gmail === targetUser.gmail) {
-                            p.role = 'Player';
+                    t.posts.forEach(post => {
+                        if (String(post.gmail || '').trim().toLowerCase() === normalizedGmail) {
+                            post.role = 'Player';
+                            delete post.banDetails;
                             updated = true;
                         }
                     });
-                    if (updated) await saveThreadToDB(t);
+                    if (updated) await saveThreadToDB(t, true);
                 }
 
-                alert(`User ${targetUser.username} unbanned.`);
+                saveUsersLocally();
+                alert(`User ${targetUser.username} has been unbanned.`);
                 reloadWebsite();
+            } catch (error) {
+                console.error('Unban user failed:', error);
+                alert('The unban could not be completed.\n\n' + (error && error.message ? error.message : error));
             }
         }
 
