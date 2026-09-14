@@ -1216,34 +1216,34 @@
             window.location.hash = path;
         }
 
+        const AUTH_EMAIL_KEY = 'pythons_family_auth_email_v2';
+
         window.addEventListener('DOMContentLoaded', () => {
             // Authentication rules:
-            // 1. A brand-new website opening/tab must always start logged out.
-            // 2. A normal browser reload (including our action auto-refresh) keeps
-            //    the current login for this tab.
-            // 3. Never use localStorage for the login session because it survives
-            //    completely new visits and can cause an old account to auto-login.
+            // 1. A visitor who has never logged in on this browser must log in or register.
+            // 2. After a successful login/registration, the account remains signed in
+            //    when the website is closed and opened again.
+            // 3. Normal page/action auto-refresh also keeps the same account signed in.
+            // 4. Clicking Logout explicitly removes the persistent login.
+            // 5. Use a new auth key so old versions cannot automatically restore dfsa/admin.
             currentUser = null;
-            const navigationEntry = performance.getEntriesByType('navigation')[0];
-            const isReload = navigationEntry ? navigationEntry.type === 'reload' : false;
-            const sessionEmail = isReload ? sessionStorage.getItem('pythons_family_session_email') : null;
 
-            if (sessionEmail) {
+            // Remove legacy session/persistent keys from older versions. They are never
+            // used to authenticate the visitor anymore.
+            sessionStorage.removeItem('pythons_family_session_email');
+            localStorage.removeItem('pythons_family_logged_email');
+
+            const savedAuthEmail = localStorage.getItem(AUTH_EMAIL_KEY);
+            if (savedAuthEmail) {
                 const foundUser = registeredUsers.find(u =>
-                    u.gmail && u.gmail.toLowerCase() === sessionEmail.toLowerCase()
+                    u.gmail && u.gmail.toLowerCase() === savedAuthEmail.toLowerCase()
                 );
                 if (foundUser && !foundUser.isBanned) {
                     currentUser = foundUser;
                 } else {
-                    sessionStorage.removeItem('pythons_family_session_email');
+                    localStorage.removeItem(AUTH_EMAIL_KEY);
                 }
-            } else if (!isReload) {
-                // New tab/direct visit: force authentication.
-                sessionStorage.removeItem('pythons_family_session_email');
             }
-
-            // Remove any legacy persistent login left by older versions.
-            localStorage.removeItem('pythons_family_logged_email');
 
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -1902,7 +1902,7 @@
             saveUserToDB(newUser);
             
             currentUser = newUser;
-            sessionStorage.setItem('pythons_family_session_email', newUser.gmail);
+            localStorage.setItem(AUTH_EMAIL_KEY, newUser.gmail);
             
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -1928,7 +1928,7 @@
             }
 
             currentUser = user;
-            sessionStorage.setItem('pythons_family_session_email', user.gmail);
+            localStorage.setItem(AUTH_EMAIL_KEY, user.gmail);
             updateAuthUI();
             updatePrefixMenuForRole();
             document.getElementById('login-form').reset();
@@ -1937,7 +1937,7 @@
 
         function logout() {
             currentUser = null;
-            sessionStorage.removeItem('pythons_family_session_email');
+            localStorage.removeItem(AUTH_EMAIL_KEY);
             updateAuthUI();
             navigateTo('forum-list');
         }
