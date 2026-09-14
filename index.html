@@ -314,12 +314,76 @@
             display: inline-block;
         }
 
-        .prefix-pending { background-color: #f59e0b; color: #000; }
-        .prefix-curator { background-color: #8b5cf6; color: #fff; }
-        .prefix-reviewing { background-color: #eab308; color: #000; }
-        .prefix-consideration { background-color: #f97316; color: #fff; }
-        .prefix-approved { background-color: #22c55e; color: #fff; }
-        .prefix-rejected { background-color: #ef4444; color: #fff; }
+        /* Every forum prefix is animated in its OWN colour family.
+           These animations never shift the prefix into another hue.
+           IMPORTANT intentionally keeps its separate rainbow animation below. */
+        .prefix-pending {
+            color: #000;
+            background: #f59e0b;
+            animation: prefixPending 2s ease-in-out infinite;
+        }
+
+        .prefix-curator {
+            color: #fff;
+            background: #8b5cf6;
+            animation: prefixPurple 2s ease-in-out infinite;
+        }
+
+        /* Reviewing = YELLOW ONLY. No rainbow/hue rotation. */
+        .prefix-reviewing {
+            color: #000;
+            background: #eab308;
+            animation: prefixYellow 1.8s ease-in-out infinite;
+        }
+
+        .prefix-consideration {
+            color: #fff;
+            background: #f97316;
+            animation: prefixOrange 2s ease-in-out infinite;
+        }
+
+        .prefix-approved {
+            color: #fff;
+            background: #16a34a;
+            animation: prefixGreen 2s ease-in-out infinite;
+        }
+
+        .prefix-rejected {
+            color: #fff;
+            background: #dc2626;
+            animation: prefixRed 2s ease-in-out infinite;
+        }
+
+        /* Each animation only pulses brightness/glow in its existing colour. */
+        @keyframes prefixPending {
+            0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(245,158,11,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(245,158,11,.72); }
+        }
+
+        @keyframes prefixPurple {
+            0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(139,92,246,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(139,92,246,.72); }
+        }
+
+        @keyframes prefixYellow {
+            0%, 100% { opacity: .88; box-shadow: 0 0 0 rgba(234,179,8,0); }
+            50% { opacity: 1; box-shadow: 0 0 14px rgba(234,179,8,.85); }
+        }
+
+        @keyframes prefixOrange {
+            0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(249,115,22,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(249,115,22,.72); }
+        }
+
+        @keyframes prefixGreen {
+            0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(22,163,74,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(22,163,74,.72); }
+        }
+
+        @keyframes prefixRed {
+            0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(220,38,38,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(220,38,38,.72); }
+        }
 
         /* IMPORTANT prefix: animated rainbow effect, restricted to Administrator and Curator of Pythons */
         .prefix-important {
