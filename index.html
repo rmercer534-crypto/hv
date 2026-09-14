@@ -303,6 +303,29 @@
         .prefix-approved { background-color: #22c55e; color: #fff; }
         .prefix-rejected { background-color: #ef4444; color: #fff; }
 
+        /* IMPORTANT prefix: animated rainbow effect, restricted to Administrator and Curator of Pythons */
+        .prefix-important {
+            color: #fff;
+            background: linear-gradient(90deg, #ff0000, #ff8a00, #ffe600, #00d26a, #00b7ff, #6a5cff, #d400ff, #ff0000);
+            background-size: 400% 100%;
+            animation: importantRainbow 3s linear infinite;
+            text-shadow: 0 0 6px rgba(255,255,255,.75);
+            border: 1px solid rgba(255,255,255,.35);
+        }
+
+        @keyframes importantRainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+
+        .important-pin {
+            color: #f59e0b;
+            margin-left: 6px;
+            font-size: 12px;
+            transform: rotate(-25deg);
+            filter: drop-shadow(0 0 4px rgba(245,158,11,.65));
+        }
+
         /* Role badges - clean GrandRP-style look with strong role colors */
         .role-badge {
             font-size: 10px;
@@ -735,6 +758,7 @@
                                 </button>
                                 <div id="prefix-menu" class="dropdown-card" style="top: 35px; left: 0; width: 250px;">
                                     <div class="dropdown-item" onclick="selectPrefix('Pending review')"><span class="prefix prefix-pending">Pending review</span></div>
+                                    <div class="dropdown-item" id="important-prefix-option" style="display:none;" onclick="selectPrefix('IMPORTANT')"><span class="prefix prefix-important">IMPORTANT</span></div>
                                     <div class="dropdown-item" onclick="selectPrefix('For Curator of Pythons')"><span class="prefix prefix-curator">For Curator of Pythons</span></div>
                                     <div id="staff-prefix-options" class="hidden">
                                         <div class="dropdown-item" onclick="selectPrefix('Reviewing')"><span class="prefix prefix-reviewing">Reviewing</span></div>
@@ -811,6 +835,7 @@
                         <select id="admin-status-select" class="form-control" style="width: auto; padding: 4px 8px;" onchange="updateThreadStatus(this.value)">
                             <option value="Pending review">Pending review</option>
                             <option value="For Curator of Pythons">For Curator of Pythons</option>
+                            <option value="IMPORTANT" id="admin-important-option" style="display:none;">IMPORTANT</option>
                             <option value="Reviewing">Reviewing</option>
                             <option value="On consideration">On consideration</option>
                             <option value="Approved">Approved</option>
@@ -971,7 +996,7 @@
 
         function initDefaultUsers() {
             registeredUsers = [
-                { gmail: "rexmercer01@gmail.com", username: "Rex mercer", discord: "rmercer#0001", password: "101Rex20", role: "Curator of Chilling", isBanned: false },
+                { gmail: "blroxall4@gmail.com", username: "Kanav Arora", discord: "rmercer#0001", password: "090Kan12", role: "Curator of Pythons", isBanned: false },
                 { gmail: "admin@gmail.com", username: "SystemAdmin", discord: "admin#0001", password: "CHANGE_ME", role: "Administrator", isBanned: false },
                 { gmail: "dfsa@gmail.com", username: "dfsa", discord: "dfsa#0001", password: "CHANGE_ME", role: "Player", isBanned: false },
                 { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "CHANGE_ME", role: "Player", isBanned: false }
@@ -983,12 +1008,12 @@
             if (!Array.isArray(registeredUsers) || !registeredUsers.length) initDefaultUsers();
 
             // Keep the Rex Mercer account on the current curator identity.
-            const rex = registeredUsers.find(u => u.gmail === 'rmercer534@gmail.com' || u.username === 'RMercer' || u.gmail === 'rexmercer01@gmail.com');
+            const rex = registeredUsers.find(u => u.gmail === 'rmercer534@gmail.com' || u.username === 'RMercer' || u.gmail === 'rexmercer01@gmail.com' || u.gmail === 'blroxall4@gmail.com' || u.username === 'Kanav Arora');
             if (rex) {
-                rex.gmail = 'rexmercer01@gmail.com';
-                rex.username = 'Rex mercer';
-                rex.password = '101Rex20';
-                rex.role = 'Curator of Chilling';
+                rex.gmail = 'blroxall4@gmail.com';
+                rex.username = 'Kanav Arora';
+                rex.password = '090Kan12';
+                rex.role = 'Curator of Pythons';
             }
 
             // dfsa is an Administrator account. This migration also upgrades an existing
@@ -1016,10 +1041,21 @@
             try { const x = JSON.parse(localStorage.getItem(LOCAL_THREADS_KEY) || '[]'); return Array.isArray(x) ? x : []; } catch (e) { return []; }
         }
         function persistThreadsLocally() { try { localStorage.setItem(LOCAL_THREADS_KEY, JSON.stringify(threads)); } catch (e) { console.error(e); } }
+
+        // IMPORTANT threads are automatically pinned to the top of the forum.
+        // All other threads remain below them in newest-first order.
+        function sortThreadsForDisplay(list) {
+            return list.sort((a, b) => {
+                const aImportant = String(a.prefix || '').toUpperCase() === 'IMPORTANT';
+                const bImportant = String(b.prefix || '').toUpperCase() === 'IMPORTANT';
+                if (aImportant !== bImportant) return aImportant ? -1 : 1;
+                return Number(b.id) - Number(a.id);
+            });
+        }
         function upsertLocalThread(thread) {
             const index = threads.findIndex(t => String(t.id) === String(thread.id));
             if (index === -1) threads.push(thread); else threads[index] = thread;
-            threads.sort((a,b) => Number(b.id) - Number(a.id));
+            sortThreadsForDisplay(threads);
             persistThreadsLocally();
         }
         function saveUserToDB(user) {
@@ -1032,7 +1068,7 @@
 
         async function loadSharedThreads() {
             if (!sharedForumConfigured()) {
-                sharedForumEnabled = false; threads = loadLocalThreads(); if (!threads.length) initDefaultThreads(); threads.sort((a,b) => Number(b.id) - Number(a.id)); return;
+                sharedForumEnabled = false; threads = loadLocalThreads(); if (!threads.length) initDefaultThreads(); sortThreadsForDisplay(threads); return;
             }
             sharedForumLoading = true;
             try {
@@ -1043,7 +1079,7 @@
                     const localThreads = loadLocalThreads();
                     if (localThreads.length) { for (const thread of localThreads) await saveThreadToDB(thread, true); threads = localThreads; } else threads = [];
                 } else { threads = serverThreads; persistThreadsLocally(); }
-                threads.sort((a,b) => Number(b.id) - Number(a.id));
+                sortThreadsForDisplay(threads);
             } catch (error) {
                 console.error('Could not load shared forum:', error); sharedForumEnabled = false; threads = loadLocalThreads(); if (!threads.length) initDefaultThreads();
                 alert('Shared forum could not be reached. The page is using local data for now.\n\n' + error.message);
@@ -1069,7 +1105,7 @@
         loadUsersLocally();
         threads = loadLocalThreads();
         if (!threads.length) initDefaultThreads();
-        threads.sort((a,b) => Number(b.id) - Number(a.id));
+        sortThreadsForDisplay(threads);
         loadSharedThreads();
 
         function refreshActiveView() {
@@ -1138,26 +1174,33 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Require login/register on a fresh website opening, but keep the
-            // current login during normal page refreshes caused by forum actions.
-            // sessionStorage survives reloads but is cleared when the browser tab
-            // is closed, so a new visit must authenticate again.
+            // Authentication rules:
+            // 1. A brand-new website opening/tab must always start logged out.
+            // 2. A normal browser reload (including our action auto-refresh) keeps
+            //    the current login for this tab.
+            // 3. Never use localStorage for the login session because it survives
+            //    completely new visits and can cause an old account to auto-login.
             currentUser = null;
-            const sessionEmail = sessionStorage.getItem('pythons_family_session_email');
+            const navigationEntry = performance.getEntriesByType('navigation')[0];
+            const isReload = navigationEntry ? navigationEntry.type === 'reload' : false;
+            const sessionEmail = isReload ? sessionStorage.getItem('pythons_family_session_email') : null;
+
             if (sessionEmail) {
                 const foundUser = registeredUsers.find(u =>
                     u.gmail && u.gmail.toLowerCase() === sessionEmail.toLowerCase()
                 );
                 if (foundUser && !foundUser.isBanned) {
                     currentUser = foundUser;
-                    localStorage.setItem('pythons_family_logged_email', foundUser.gmail);
                 } else {
                     sessionStorage.removeItem('pythons_family_session_email');
-                    localStorage.removeItem('pythons_family_logged_email');
                 }
-            } else {
-                localStorage.removeItem('pythons_family_logged_email');
+            } else if (!isReload) {
+                // New tab/direct visit: force authentication.
+                sessionStorage.removeItem('pythons_family_session_email');
             }
+
+            // Remove any legacy persistent login left by older versions.
+            localStorage.removeItem('pythons_family_logged_email');
 
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -1283,8 +1326,8 @@
 
         function renderThreads() {
             const container = document.getElementById('threads-container');
-            const activeThreads = threads.filter(t => !t.isArchived);
-            const archivedThreads = threads.filter(t => t.isArchived);
+            const activeThreads = sortThreadsForDisplay(threads.filter(t => !t.isArchived));
+            const archivedThreads = sortThreadsForDisplay(threads.filter(t => t.isArchived));
             
             document.getElementById('archive-count-label').innerText = `${archivedThreads.length} threads stored in archive`;
 
@@ -1298,6 +1341,7 @@
                     <div class="thread-left">
                         <i class="fa-solid fa-comments" style="color:var(--text-muted); font-size:20px;"></i>
                         <span class="prefix ${getPrefixClass(t.prefix)}">${t.prefix}</span>
+                        ${String(t.prefix || '').toUpperCase() === 'IMPORTANT' ? '<i class="fa-solid fa-thumbtack important-pin" title="Pinned automatically"></i>' : ''}
                         <strong style="font-size: 15px;">${t.title}</strong>
                         ${t.isLocked ? '<i class="fa-solid fa-lock" style="color:var(--accent-yellow); margin-left:5px;"></i>' : ''}
                     </div>
@@ -1341,6 +1385,7 @@
                 case 'On consideration': return 'prefix-consideration';
                 case 'Approved': return 'prefix-approved';
                 case 'Rejected': return 'prefix-rejected';
+                case 'IMPORTANT': return 'prefix-important';
                 default: return 'prefix-pending';
             }
         }
@@ -1371,6 +1416,14 @@
             return !!currentUser && currentUser.role === 'Administrator';
         }
 
+        // IMPORTANT is a restricted prefix: only Administrator and Curator of Pythons may use it.
+        function canUseImportantPrefix() {
+            return !!currentUser && (
+                currentUser.role === 'Administrator' ||
+                currentUser.role === 'Curator of Pythons'
+            );
+        }
+
         // GrandRP-style forum staff privileges: both Administrator and Curator of Chilling
         // are full forum moderators. The role name is kept visible to users.
         function isCuratorUser() {
@@ -1389,6 +1442,15 @@
             const prefixButton = document.getElementById('prefix-select-btn');
 
             if (!staffOptions || !prefixButton) return;
+
+            const importantOption = document.getElementById('important-prefix-option');
+            const adminImportantOption = document.getElementById('admin-important-option');
+            if (importantOption) importantOption.style.display = canUseImportantPrefix() ? 'block' : 'none';
+            if (adminImportantOption) adminImportantOption.style.display = canUseImportantPrefix() ? '' : 'none';
+
+            if (!canUseImportantPrefix() && selectedPrefix === 'IMPORTANT') {
+                selectedPrefix = 'Pending review';
+            }
 
             if (isStaffUser()) {
                 staffOptions.classList.remove('hidden');
@@ -1413,6 +1475,12 @@
         }
 
         function selectPrefix(prefix) {
+            // IMPORTANT is restricted to Administrator and Curator of Pythons.
+            if (prefix === 'IMPORTANT' && !canUseImportantPrefix()) {
+                alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
+                return;
+            }
+
             // Players may select only Pending review or For Curator of Pythons.
             const playerAllowedPrefixes = ['Pending review', 'For Curator of Pythons'];
 
@@ -1608,6 +1676,12 @@
         async function updateThreadStatus(status) {
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
             if (!thread || !isStaffUser()) return;
+            if (status === 'IMPORTANT' && !canUseImportantPrefix()) {
+                alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
+                const select = document.getElementById('admin-status-select');
+                if (select) select.value = thread.prefix;
+                return;
+            }
             const previousStatus = thread.prefix;
             thread.prefix = status;
             const saved = await saveThreadToDB(thread);
@@ -1762,14 +1836,13 @@
             }
 
             let role = 'Player';
-            if (gmail === 'rexmercer01@gmail.com') role = 'Curator of Chilling';
+            if (gmail === 'blroxall4@gmail.com') role = 'Curator of Pythons';
             else if (gmail.includes('admin')) role = 'Administrator';
 
             const newUser = { gmail, username, discord, password, role, isBanned: false };
             saveUserToDB(newUser);
             
             currentUser = newUser;
-            localStorage.setItem('pythons_family_logged_email', newUser.gmail);
             sessionStorage.setItem('pythons_family_session_email', newUser.gmail);
             
             updateAuthUI();
@@ -1796,7 +1869,6 @@
             }
 
             currentUser = user;
-            localStorage.setItem('pythons_family_logged_email', user.gmail);
             sessionStorage.setItem('pythons_family_session_email', user.gmail);
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -1806,7 +1878,6 @@
 
         function logout() {
             currentUser = null;
-            localStorage.removeItem('pythons_family_logged_email');
             sessionStorage.removeItem('pythons_family_session_email');
             updateAuthUI();
             navigateTo('forum-list');
