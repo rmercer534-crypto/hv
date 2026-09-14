@@ -1560,6 +1560,15 @@
             return !!currentUser && (isCuratorUser() || isAdministratorUser());
         }
 
+        // Ban/unban permission: Administrator and Curator of Pythons only.
+        // Curator of Chilling does not receive these controls.
+        function canBanOrUnbanUsers() {
+            return !!currentUser && (
+                currentUser.role === 'Administrator' ||
+                currentUser.role === 'Curator of Pythons'
+            );
+        }
+
         function updatePrefixMenuForRole() {
             const staffOptions = document.getElementById('staff-prefix-options');
             const prefixButton = document.getElementById('prefix-select-btn');
@@ -1687,6 +1696,7 @@
             const postsContainer = document.getElementById('posts-container');
             const isCurator = isCuratorUser();
             const isStaff = isStaffUser();
+            const canModerateUsers = canBanOrUnbanUsers();
 
             let postsHTML = thread.posts.map((p, idx) => {
                 let detailsTable = '';
@@ -1709,7 +1719,7 @@
                 }
 
                 let actionButtonHTML = '';
-                if (isCurator && p.author !== currentUser.username && !['Curator of Chilling', 'Curator of Pythons', 'Administrator'].includes(p.role)) {
+                if (canModerateUsers && p.author !== currentUser.username && !['Curator of Chilling', 'Curator of Pythons', 'Administrator'].includes(p.role)) {
                     const targetUser = registeredUsers.find(u => u.gmail === p.gmail);
                     if (targetUser && targetUser.isBanned) {
                         actionButtonHTML = `<button class="btn-green" style="margin-top:5px;" onclick="unbanUser('${p.gmail}')"><i class="fa-solid fa-unlock"></i> Unban User</button>`;
@@ -1881,17 +1891,30 @@
         }
 
         function openBanModal(gmail, username) {
-            if (!isStaffUser()) return;
-            userToBan = registeredUsers.find(u => u.gmail === gmail);
-            document.getElementById('ban-target-text').innerText = `Suspending user: ${username} (${gmail})`;
+            if (!canBanOrUnbanUsers()) {
+                alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                return;
+            }
+            const normalizedGmail = String(gmail || '').trim().toLowerCase();
+            userToBan = registeredUsers.find(u => String(u.gmail || '').trim().toLowerCase() === normalizedGmail)
+                || registeredUsers.find(u => String(u.username || '') === String(username || ''));
+            if (!userToBan) {
+                alert('This user account could not be found. Please make sure the user is registered.');
+                return;
+            }
+            document.getElementById('ban-target-text').innerText = `Suspending user: ${userToBan.username} (${userToBan.gmail})`;
+            document.getElementById('ban-reason').value = '';
             openModal('ban-modal');
         }
 
         async function confirmBanUser(e) {
             e.preventDefault();
-            if (!isStaffUser()) return;
+            if (!canBanOrUnbanUsers()) {
+                alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                return;
+            }
             const time = document.getElementById('ban-time').value;
-            const reason = document.getElementById('ban-reason').value;
+            const reason = document.getElementById('ban-reason').value.trim();
 
             if (userToBan) {
                 userToBan.isBanned = true;
@@ -1918,7 +1941,10 @@
         }
 
         async function unbanUser(gmail) {
-            if (!isStaffUser()) return;
+            if (!canBanOrUnbanUsers()) {
+                alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                return;
+            }
             const targetUser = registeredUsers.find(u => u.gmail === gmail);
             if (targetUser) {
                 targetUser.isBanned = false;
