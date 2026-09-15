@@ -653,6 +653,42 @@
             border-color: var(--accent-yellow);
         }
 
+        /* Administrator Panel */
+        .admin-ban-card {
+            border: 1px solid rgba(239,68,68,.25);
+            background: linear-gradient(180deg, rgba(239,68,68,.055), rgba(255,255,255,.02));
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .admin-ban-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 12px;
+        }
+        .admin-ban-field {
+            padding: 11px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.06);
+        }
+        .admin-ban-label {
+            display:block;
+            color:var(--text-muted);
+            font-size:11px;
+            text-transform:uppercase;
+            letter-spacing:.06em;
+            margin-bottom:5px;
+        }
+        .admin-ban-value {
+            color:var(--text-main);
+            font-size:14px;
+            word-break:break-word;
+        }
+        @media (max-width:640px) {
+            .admin-ban-grid { grid-template-columns: 1fr; }
+        }
+
         /* Modals */
         .modal-overlay {
             position: fixed;
@@ -839,6 +875,9 @@
                                 <span id="dropdown-role" class="role-badge role-player">Player</span>
                             </div>
                         </div>
+                    </div>
+                    <div class="dropdown-item" id="admin-panel-menu-item" style="display:none;" onclick="navigateTo('admin-panel'); toggleProfileDropdown();">
+                        <i class="fa-solid fa-shield-halved"></i> Admin Panel
                     </div>
                     <div class="dropdown-item" onclick="navigateTo('account-details'); toggleProfileDropdown();">
                         <i class="fa-solid fa-user-gear"></i> Account Settings
@@ -1032,7 +1071,26 @@
                 <div id="reply-container" class="forum-card" style="padding: 16px;"></div>
             </div>
 
-            <!-- VIEW 5: ACCOUNT DETAILS -->
+            <!-- VIEW 5: ADMIN PANEL (ADMINISTRATOR + CURATOR OF PYTHONS) -->
+            <div id="view-admin-panel" class="hidden">
+                <div class="breadcrumb">
+                    <a onclick="navigateTo('forum-list')">Home</a>
+                    <span>&gt;</span>
+                    <span style="color: var(--text-main);">Admin Panel</span>
+                </div>
+                <div class="forum-card" style="padding:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
+                        <div>
+                            <h2 style="margin:0 0 5px;"><i class="fa-solid fa-shield-halved"></i> Admin Panel</h2>
+                            <div style="color:var(--text-muted); font-size:13px;">Banned/unbanned player records and moderation information.</div>
+                        </div>
+                        <button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    </div>
+                    <div id="admin-banned-users-container"></div>
+                </div>
+            </div>
+
+            <!-- VIEW 6: ACCOUNT DETAILS -->
             <div id="view-account-details" class="hidden">
                 <div class="forum-card" style="padding: 20px; max-width: 500px; margin: 0 auto;">
                     <h2 style="margin-bottom: 16px;"><i class="fa-solid fa-user-gear"></i> Account Settings</h2>
@@ -1099,7 +1157,8 @@
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" id="reg-password" class="form-control" required>
+                    <input type="password" id="reg-password" class="form-control" minlength="8" autocomplete="new-password" required>
+                    <div style="margin-top:6px; color:var(--text-muted); font-size:12px;">Password must be at least 8 characters long.</div>
                 </div>
                 <button type="submit" class="btn btn-yellow" style="width: 100%;">Create Account</button>
                 <div style="text-align:center; margin-top:14px; color:var(--text-muted); font-size:13px;">
@@ -1301,6 +1360,13 @@
                 if (currentUser.isBanned || String(currentUser.role || '').toLowerCase() === 'banned') {
                     currentUser.isBanned = false;
                     currentUser.role = 'Player';
+                    // Keep any unban audit information found in the shared post.
+                    const unbanPost = threads.flatMap(t => Array.isArray(t.posts) ? t.posts : []).find(post => {
+                        const postEmail = String(post.gmail || '').trim().toLowerCase();
+                        const postUsername = String(post.author || '').trim().toLowerCase();
+                        return ((email && postEmail === email) || (!email && username && postUsername === username)) && post.unbanDetails;
+                    });
+                    if (unbanPost && unbanPost.unbanDetails) currentUser.unbanDetails = unbanPost.unbanDetails;
                     delete currentUser.banDetails;
                     saveUsersLocally();
                 }
@@ -1316,6 +1382,7 @@
                 time: foundBan.time || 'Permanent',
                 reason: foundBan.reason || 'No reason was provided.',
                 bannedAt: foundBan.bannedAt || '',
+                bannedByName: foundBan.bannedByName || 'Unknown Moderator',
                 bannedByRole: foundBan.bannedByRole || 'Administrator'
             };
             saveUsersLocally();
@@ -1375,6 +1442,8 @@
                 renderThreads();
             } else if (hash === 'archive-folder') {
                 renderArchivedThreads();
+            } else if (hash === 'admin-panel') {
+                if (canAccessAdminPanel()) renderAdminPanel(); else navigateTo('forum-list');
             } else if (hash.startsWith('thread-') && activeThreadId) {
                 const currentThread = threads.find(t => String(t.id) === String(activeThreadId));
                 if (currentThread) renderPosts(currentThread);
@@ -1407,6 +1476,8 @@
                 showArchiveView();
             } else if (hash === 'create-thread') {
                 showCreateThreadView();
+            } else if (hash === 'admin-panel') {
+                showAdminPanelView();
             } else if (hash === 'account-details') {
                 showAccountDetailsView();
             } else if (hash.startsWith('thread-')) {
@@ -1517,7 +1588,7 @@
         }
 
         function hideAllViews() {
-            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-account-details'];
+            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-admin-panel', 'view-account-details'];
             views.forEach(v => {
                 const el = document.getElementById(v);
                 if (el) el.classList.add('hidden');
@@ -1540,6 +1611,114 @@
             hideAllViews();
             document.getElementById('view-create-thread').classList.remove('hidden');
             updatePrefixMenuForRole();
+        }
+
+        function canAccessAdminPanel() {
+            return !!currentUser && (
+                currentUser.role === 'Administrator' ||
+                currentUser.role === 'Curator of Pythons'
+            );
+        }
+
+        function showAdminPanelView() {
+            if (!canAccessAdminPanel()) {
+                alert('Access denied. Only Administrators and Curator of Pythons can open the Admin Panel.');
+                navigateTo('forum-list');
+                return;
+            }
+            hideAllViews();
+            document.getElementById('view-admin-panel').classList.remove('hidden');
+            renderAdminPanel();
+        }
+
+        function renderAdminPanel() {
+            const container = document.getElementById('admin-banned-users-container');
+            if (!container) return;
+            if (!canAccessAdminPanel()) {
+                container.innerHTML = '<div class="admin-ban-card">Access denied.</div>';
+                return;
+            }
+
+            const records = [];
+            const seen = new Map();
+            (Array.isArray(threads) ? threads : []).forEach(thread => {
+                (Array.isArray(thread.posts) ? thread.posts : []).forEach(post => {
+                    const details = post.banDetails || {};
+                    const unban = post.unbanDetails || {};
+                    if (!Object.keys(details).length && !Object.keys(unban).length) return;
+
+                    const email = String(post.gmail || '').trim().toLowerCase();
+                    const username = String(post.author || '').trim();
+                    const key = email || username.toLowerCase();
+                    if (!key) return;
+
+                    const localUser = registeredUsers.find(u =>
+                        (email && String(u.gmail || '').trim().toLowerCase() === email) ||
+                        (!email && String(u.username || '').trim().toLowerCase() === username.toLowerCase())
+                    ) || {};
+
+                    const activeBan = String(post.role || '').trim().toLowerCase() === 'banned';
+                    const existing = seen.get(key);
+                    const record = {
+                        username: username || localUser.username || 'Unknown Player',
+                        activeBan,
+                        bannedByName: details.bannedByName || (existing && existing.bannedByName) || 'Unknown Moderator',
+                        bannedByRole: details.bannedByRole || (existing && existing.bannedByRole) || 'Administrator',
+                        reason: details.reason || (existing && existing.reason) || 'No reason was provided.',
+                        unbannedByName: unban.unbannedByName || (existing && existing.unbannedByName) || '',
+                        unbannedByRole: unban.unbannedByRole || (existing && existing.unbannedByRole) || '',
+                        unbannedAt: unban.unbannedAt || (existing && existing.unbannedAt) || ''
+                    };
+
+                    if (!existing) {
+                        seen.set(key, record);
+                        records.push(record);
+                    } else {
+                        Object.assign(existing, record);
+                    }
+                });
+            });
+
+            if (!records.length) {
+                container.innerHTML = `
+                    <div class="admin-ban-card" style="text-align:center; color:var(--text-muted); padding:30px;">
+                        <i class="fa-solid fa-circle-check" style="font-size:28px; margin-bottom:10px;"></i>
+                        <div>No ban or unban records found.</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = records.map(record => `
+                <div class="admin-ban-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+                        <strong style="font-size:16px;"><i class="fa-solid ${record.activeBan ? 'fa-user-slash' : 'fa-user-check'}" style="color:${record.activeBan ? '#ef4444' : '#10b981'};"></i> ${escapeBannedText(record.username)}</strong>
+                        <span class="role-badge ${record.activeBan ? 'role-banned' : 'role-player'}">${record.activeBan ? 'Banned' : 'Unbanned'}</span>
+                    </div>
+                    <div class="admin-ban-grid">
+                        <div class="admin-ban-field">
+                            <span class="admin-ban-label">Banned By</span>
+                            <div class="admin-ban-value">${escapeBannedText(record.bannedByName)}</div>
+                        </div>
+                        <div class="admin-ban-field">
+                            <span class="admin-ban-label">Moderator Role</span>
+                            <div class="admin-ban-value">${escapeBannedText(record.bannedByRole)}</div>
+                        </div>
+                        <div class="admin-ban-field">
+                            <span class="admin-ban-label">Reason</span>
+                            <div class="admin-ban-value">${escapeBannedText(record.reason)}</div>
+                        </div>
+                        ${record.unbannedByName ? `
+                        <div class="admin-ban-field">
+                            <span class="admin-ban-label">Unbanned By</span>
+                            <div class="admin-ban-value">${escapeBannedText(record.unbannedByName)}</div>
+                        </div>
+                        <div class="admin-ban-field">
+                            <span class="admin-ban-label">Unbanned By Role</span>
+                            <div class="admin-ban-value">${escapeBannedText(record.unbannedByRole || 'Unknown Moderator')}</div>
+                        </div>` : ''}
+                    </div>
+                </div>
+            `).join('');
         }
 
         function showAccountDetailsView() {
@@ -2144,8 +2323,10 @@
                     time,
                     reason,
                     bannedAt: new Date().toISOString(),
+                    bannedByName: currentUser.username || 'Unknown Moderator',
                     bannedByRole: currentUser.role
                 };
+                delete userToBan.unbanDetails;
                 saveUserToDB(userToBan);
 
                 // Update every post belonging to this account.
@@ -2162,8 +2343,10 @@
                                 time,
                                 reason,
                                 bannedAt: new Date().toISOString(),
+                                bannedByName: currentUser.username || 'Unknown Moderator',
                                 bannedByRole: currentUser.role
                             };
+                            delete post.unbanDetails;
                             updated = true;
                         }
                     });
@@ -2235,10 +2418,16 @@
                     return;
                 }
 
-                // Clear the account ban locally first.
+                // Clear the active account ban locally, but preserve the ban history
+                // and record exactly who performed the unban.
+                const unbanDetails = {
+                    unbannedAt: new Date().toISOString(),
+                    unbannedByName: currentUser.username || 'Unknown Moderator',
+                    unbannedByRole: currentUser.role || 'Unknown Moderator'
+                };
                 targetUser.isBanned = false;
                 targetUser.role = 'Player';
-                delete targetUser.banDetails;
+                targetUser.unbanDetails = unbanDetails;
                 saveUserToDB(targetUser);
 
                 // Remove the ban from EVERY shared post for this player.
@@ -2250,7 +2439,12 @@
                     t.posts.forEach(post => {
                         if (String(post.gmail || '').trim().toLowerCase() === normalizedGmail) {
                             post.role = 'Player';
-                            delete post.banDetails;
+                            post.unbanDetails = {
+                                unbannedAt: unbanDetails.unbannedAt,
+                                unbannedByName: unbanDetails.unbannedByName,
+                                unbannedByRole: unbanDetails.unbannedByRole
+                            };
+                            // Keep post.banDetails so the Admin Panel retains the full history.
                             updated = true;
                         }
                     });
@@ -2277,6 +2471,12 @@
             const username = document.getElementById('reg-username').value.trim();
             const discord = document.getElementById('reg-discord').value.trim();
             const password = document.getElementById('reg-password').value;
+
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters long.');
+                document.getElementById('reg-password').focus();
+                return;
+            }
 
             if (registeredUsers.find(u => u.gmail === gmail)) {
                 alert("Account already exists!");
@@ -2413,7 +2613,11 @@
                 const roleBadge = document.getElementById('dropdown-role');
                 roleBadge.innerText = currentUser.role;
                 roleBadge.className = `role-badge ${getRoleClass(currentUser.role)}`;
+                const adminPanelItem = document.getElementById('admin-panel-menu-item');
+                if (adminPanelItem) adminPanelItem.style.display = canAccessAdminPanel() ? 'flex' : 'none';
             } else {
+                const adminPanelItem = document.getElementById('admin-panel-menu-item');
+                if (adminPanelItem) adminPanelItem.style.display = 'none';
                 guestNav.classList.remove('hidden');
                 userNav.classList.add('hidden');
             }
