@@ -1895,14 +1895,57 @@
                 alert('Only Administrator and Curator of Pythons can ban or unban users.');
                 return;
             }
+
             const normalizedGmail = String(gmail || '').trim().toLowerCase();
-            userToBan = registeredUsers.find(u => String(u.gmail || '').trim().toLowerCase() === normalizedGmail)
-                || registeredUsers.find(u => String(u.username || '') === String(username || ''));
+            const normalizedUsername = String(username || '').trim();
+
+            // First try the moderator's local registered-user list.
+            userToBan = registeredUsers.find(u =>
+                normalizedGmail && String(u.gmail || '').trim().toLowerCase() === normalizedGmail
+            ) || registeredUsers.find(u =>
+                normalizedUsername && String(u.username || '').trim() === normalizedUsername
+            );
+
+            // User accounts are stored locally, while forum posts are shared through
+            // Supabase. A player registered on another browser therefore may not exist
+            // in this browser's local registeredUsers array. If the post contains the
+            // player's Gmail, create a local account record from the post identity so
+            // moderators can still ban that shared forum user.
+            if (!userToBan && normalizedGmail) {
+                userToBan = {
+                    gmail: normalizedGmail,
+                    username: normalizedUsername || normalizedGmail.split('@')[0],
+                    discord: '',
+                    password: '',
+                    role: 'Player',
+                    isBanned: false
+                };
+                registeredUsers.push(userToBan);
+                saveUsersLocally();
+            }
+
+            // Last fallback: allow banning a shared post even when an older post has no
+            // Gmail stored, by creating a local identity keyed by username.
+            if (!userToBan && normalizedUsername) {
+                userToBan = {
+                    gmail: '',
+                    username: normalizedUsername,
+                    discord: '',
+                    password: '',
+                    role: 'Player',
+                    isBanned: false
+                };
+                registeredUsers.push(userToBan);
+                saveUsersLocally();
+            }
+
             if (!userToBan) {
-                alert('This user account could not be found. Please make sure the user is registered.');
+                alert('This user could not be identified from the forum post. Please make sure the post contains the player account information.');
                 return;
             }
-            document.getElementById('ban-target-text').innerText = `Suspending user: ${userToBan.username} (${userToBan.gmail})`;
+
+            document.getElementById('ban-target-text').innerText =
+                `Suspending user: ${userToBan.username}${userToBan.gmail ? ` (${userToBan.gmail})` : ''}`;
             document.getElementById('ban-reason').value = '';
             openModal('ban-modal');
         }
