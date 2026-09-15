@@ -1268,19 +1268,44 @@
             if (!currentUser || !Array.isArray(threads)) return false;
 
             const email = String(currentUser.gmail || '').trim().toLowerCase();
-            if (!email) return false;
+            const username = String(currentUser.username || '').trim().toLowerCase();
+            if (!email && !username) return false;
 
             let foundBan = null;
+            let matchingPostFound = false;
+
             for (const thread of threads) {
                 if (!Array.isArray(thread.posts)) continue;
                 for (const post of thread.posts) {
-                    if (String(post.gmail || '').trim().toLowerCase() === email &&
-                        String(post.role || '').trim().toLowerCase() === 'banned') {
-                        foundBan = post.banDetails || null;
+                    const postEmail = String(post.gmail || '').trim().toLowerCase();
+                    const postUsername = String(post.author || '').trim().toLowerCase();
+                    const sameUser = (email && postEmail === email) ||
+                        (!email && username && postUsername === username);
+
+                    if (!sameUser) continue;
+                    matchingPostFound = true;
+
+                    if (String(post.role || '').trim().toLowerCase() === 'banned') {
+                        foundBan = post.banDetails || {};
                         break;
                     }
                 }
                 if (foundBan) break;
+            }
+
+            // IMPORTANT: If the moderator has removed the ban from the shared
+            // forum, clear any stale banned state stored in this browser.
+            // Without this, the previously banned player could remain locked
+            // out even after an Administrator/Curator of Pythons unbans them.
+            if (!foundBan && (matchingPostFound || currentUser.isBanned)) {
+                if (currentUser.isBanned || String(currentUser.role || '').toLowerCase() === 'banned') {
+                    currentUser.isBanned = false;
+                    currentUser.role = 'Player';
+                    delete currentUser.banDetails;
+                    saveUsersLocally();
+                }
+                hideBannedAccessScreen();
+                return false;
             }
 
             if (!foundBan) return false;
@@ -2169,18 +2194,56 @@
                 }
 
                 const normalizedGmail = String(gmail || '').trim().toLowerCase();
-                const targetUser = registeredUsers.find(u => String(u.gmail || '').trim().toLowerCase() === normalizedGmail);
+                if (!normalizedGmail) {
+                    alert('The user account could not be identified.');
+                    return;
+                }
+
+                // The account may not exist in this browser's localStorage.
+                // Recover its identity from the shared forum post so an admin
+                // can unban a player from another browser/device.
+                let targetUser = registeredUsers.find(u =>
+                    String(u.gmail || '').trim().toLowerCase() === normalizedGmail
+                );
+
+                if (!targetUser) {
+                    let sharedPost = null;
+                    for (const t of threads) {
+                        if (!Array.isArray(t.posts)) continue;
+                        sharedPost = t.posts.find(post =>
+                            String(post.gmail || '').trim().toLowerCase() === normalizedGmail
+                        );
+                        if (sharedPost) break;
+                    }
+
+                    if (sharedPost) {
+                        targetUser = {
+                            gmail: normalizedGmail,
+                            username: sharedPost.author || 'Player',
+                            discord: '',
+                            password: '',
+                            role: 'Banned',
+                            isBanned: true,
+                            banDetails: sharedPost.banDetails || {}
+                        };
+                        registeredUsers.push(targetUser);
+                    }
+                }
+
                 if (!targetUser) {
                     alert('The user account could not be found.');
                     return;
                 }
 
+                // Clear the account ban locally first.
                 targetUser.isBanned = false;
-                // Restore the normal player role when a banned player is unbanned.
                 targetUser.role = 'Player';
                 delete targetUser.banDetails;
                 saveUserToDB(targetUser);
 
+                // Remove the ban from EVERY shared post for this player.
+                // This is what makes the unban propagate to the player's
+                // browser through syncBannedUserFromSharedThreads().
                 for (const t of threads) {
                     if (!Array.isArray(t.posts)) continue;
                     let updated = false;
@@ -2191,7 +2254,9 @@
                             updated = true;
                         }
                     });
-                    if (updated) await saveThreadToDB(t, true);
+                    if (updated) {
+                        await saveThreadToDB(t, true);
+                    }
                 }
 
                 saveUsersLocally();
