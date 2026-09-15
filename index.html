@@ -718,9 +718,100 @@
             .forum-banner-card { padding:18px; }
             .landing-screen { min-height:calc(100vh - 54px); }
         }
-    </style>
+    
+/* BANNED ACCOUNT LOCK SCREEN */
+#banned-access-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #070707;
+    color: #fff;
+    text-align: center;
+    font-family: inherit;
+}
+#banned-access-screen .banned-box {
+    width: min(560px, 92vw);
+    padding: 42px 32px;
+    border: 1px solid rgba(239,68,68,.35);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #171717, #0c0c0c);
+    box-shadow: 0 0 45px rgba(239,68,68,.14);
+}
+#banned-access-screen .banned-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(239,68,68,.10);
+    border: 1px solid rgba(239,68,68,.35);
+    color: #ef4444;
+    font-size: 34px;
+}
+#banned-access-screen h1 {
+    margin: 0 0 12px;
+    font-size: 28px;
+    color: #ef4444;
+}
+#banned-access-screen .banned-message {
+    margin: 0 0 22px;
+    color: #e5e5e5;
+    font-size: 15px;
+    line-height: 1.6;
+}
+#banned-access-screen .banned-reason {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.08);
+    text-align: left;
+}
+#banned-access-screen .banned-reason-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #9ca3af;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+#banned-access-screen .banned-reason-text {
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+#banned-access-screen .banned-duration {
+    margin-top: 16px;
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+</style>
 </head>
 <body>
+
+    <div id="banned-access-screen" aria-hidden="true">
+        <div class="banned-box">
+            <div class="banned-icon"><i class="fa-solid fa-ban"></i></div>
+            <h1>You Were Banned</h1>
+            <p class="banned-message" id="banned-access-message">
+                You were banned from Pythons Family Forum.
+            </p>
+            <div class="banned-reason">
+                <span class="banned-reason-label">Reason</span>
+                <div class="banned-reason-text" id="banned-access-reason">No reason provided.</div>
+            </div>
+            <div class="banned-duration" id="banned-access-duration"></div>
+        </div>
+    </div>
+
 
     <!-- TOP NAVBAR -->
     <header>
@@ -1173,6 +1264,41 @@
             return true;
         }
 
+        function syncBannedUserFromSharedThreads() {
+            if (!currentUser || !Array.isArray(threads)) return false;
+
+            const email = String(currentUser.gmail || '').trim().toLowerCase();
+            if (!email) return false;
+
+            let foundBan = null;
+            for (const thread of threads) {
+                if (!Array.isArray(thread.posts)) continue;
+                for (const post of thread.posts) {
+                    if (String(post.gmail || '').trim().toLowerCase() === email &&
+                        String(post.role || '').trim().toLowerCase() === 'banned') {
+                        foundBan = post.banDetails || null;
+                        break;
+                    }
+                }
+                if (foundBan) break;
+            }
+
+            if (!foundBan) return false;
+
+            currentUser.isBanned = true;
+            currentUser.role = 'Banned';
+            currentUser.banDetails = {
+                time: foundBan.time || 'Permanent',
+                reason: foundBan.reason || 'No reason was provided.',
+                bannedAt: foundBan.bannedAt || '',
+                bannedByRole: foundBan.bannedByRole || 'Administrator'
+            };
+            saveUsersLocally();
+            localStorage.setItem(AUTH_EMAIL_KEY, currentUser.gmail);
+            showBannedAccessScreen(currentUser);
+            return true;
+        }
+
         async function loadSharedThreads() {
             if (!sharedForumConfigured()) {
                 sharedForumEnabled = false; threads = loadLocalThreads(); if (!threads.length) initDefaultThreads(); sortThreadsForDisplay(threads); return;
@@ -1190,7 +1316,10 @@
             } catch (error) {
                 console.error('Could not load shared forum:', error); sharedForumEnabled = false; threads = loadLocalThreads(); if (!threads.length) initDefaultThreads();
                 alert('Shared forum could not be reached. The page is using local data for now.\n\n' + error.message);
-            } finally { sharedForumLoading = false; refreshActiveView(); }
+            } finally {
+                sharedForumLoading = false;
+                if (!syncBannedUserFromSharedThreads()) refreshActiveView();
+            }
         }
 
         async function saveThreadToDB(thread, silent = false) {
@@ -1302,7 +1431,8 @@
                 const foundUser = registeredUsers.find(u =>
                     u.gmail && u.gmail.toLowerCase() === savedAuthEmail.toLowerCase()
                 );
-                if (foundUser && !foundUser.isBanned) {
+                if (foundUser) {
+                    // Keep banned accounts signed in only to show the ban screen.
                     currentUser = foundUser;
                 } else {
                     localStorage.removeItem(AUTH_EMAIL_KEY);
@@ -1310,6 +1440,7 @@
             }
 
             updateAuthUI();
+            if (enforceBanAccess()) return;
             updatePrefixMenuForRole();
 
             // Never create an automatic guest/admin session. A visitor must log in
@@ -1514,6 +1645,7 @@
         }
 
         function handleNewThreadClick() {
+            if (enforceBanAccess()) return;
             if (!currentUser) {
                 openModal('login-modal');
             } else if (currentUser.isBanned) {
@@ -1631,6 +1763,7 @@
 
         async function submitThread(e) {
             e.preventDefault();
+            if (enforceBanAccess()) return false;
             if (!currentUser) { alert('Please log in before submitting a complaint.'); openModal('login-modal'); return false; }
             if (currentUser.isBanned) { alert('Your account is banned. You cannot create a complaint.'); return false; }
             const form = document.getElementById('create-thread-form');
@@ -1786,6 +1919,7 @@
 
         async function submitReply(e) {
             e.preventDefault();
+            if (enforceBanAccess()) return false;
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
             if (!thread || !currentUser) return;
 
@@ -1981,7 +2115,12 @@
                 // Update the account immediately in local storage.
                 userToBan.isBanned = true;
                 userToBan.role = 'Banned';
-                userToBan.banDetails = { time, reason, bannedAt: new Date().toISOString() };
+                userToBan.banDetails = {
+                    time,
+                    reason,
+                    bannedAt: new Date().toISOString(),
+                    bannedByRole: currentUser.role
+                };
                 saveUserToDB(userToBan);
 
                 // Update every post belonging to this account.
@@ -1994,7 +2133,12 @@
                             (!targetEmail && String(post.author || '') === String(targetUsername));
                         if (sameUser) {
                             post.role = 'Banned';
-                            post.banDetails = { time, reason };
+                            post.banDetails = {
+                                time,
+                                reason,
+                                bannedAt: new Date().toISOString(),
+                                bannedByRole: currentUser.role
+                            };
                             updated = true;
                         }
                     });
@@ -2102,12 +2246,15 @@
                 return;
             }
 
+            currentUser = user;
+
+            // Banned accounts are allowed to authenticate only so the site can
+            // display the ban notice. They receive no forum access.
             if (user.isBanned) {
-                alert("ACCOUNT BANNED");
+                localStorage.setItem(AUTH_EMAIL_KEY, user.gmail);
+                updateAuthUI();
                 return;
             }
-
-            currentUser = user;
             localStorage.setItem(AUTH_EMAIL_KEY, user.gmail);
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -2122,7 +2269,71 @@
             navigateTo('forum-list');
         }
 
+        function escapeBannedText(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getBanIssuerRole(user) {
+            const details = user && user.banDetails ? user.banDetails : {};
+            return details.bannedByRole || 'Administrator';
+        }
+
+        function showBannedAccessScreen(user) {
+            const screen = document.getElementById('banned-access-screen');
+            if (!screen) return;
+
+            const details = user && user.banDetails ? user.banDetails : {};
+            const issuerRole = getBanIssuerRole(user);
+            const reason = details.reason || 'No reason was provided.';
+            const duration = details.time ? `Ban duration: ${details.time}` : '';
+
+            document.getElementById('banned-access-message').innerHTML =
+                `You were banned by <strong>${escapeBannedText(issuerRole)}</strong>.`;
+            document.getElementById('banned-access-reason').textContent = reason;
+            document.getElementById('banned-access-duration').textContent = duration;
+
+            // Remove all normal website access while the account is banned.
+            const landing = document.getElementById('landing-screen');
+            const forum = document.getElementById('forum-app');
+            if (landing) landing.style.display = 'none';
+            if (forum) forum.style.display = 'none';
+
+            // Close any modal/dropdown and prevent normal page scrolling.
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            if (profileDropdown) profileDropdown.style.display = 'none';
+
+            screen.style.display = 'flex';
+            screen.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideBannedAccessScreen() {
+            const screen = document.getElementById('banned-access-screen');
+            if (screen) {
+                screen.style.display = 'none';
+                screen.setAttribute('aria-hidden', 'true');
+            }
+            document.body.style.overflow = '';
+        }
+
+        function enforceBanAccess() {
+            if (currentUser && currentUser.isBanned) {
+                showBannedAccessScreen(currentUser);
+                return true;
+            }
+            hideBannedAccessScreen();
+            return false;
+        }
+
         function updateAuthUI() {
+            if (enforceBanAccess()) return;
+
             const guestNav = document.getElementById('guest-nav');
             const userNav = document.getElementById('user-nav');
 
