@@ -1197,8 +1197,8 @@
             </div>
             <form id="login-form" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label>Gmail Address</label>
-                    <input type="email" id="login-email" class="form-control" required>
+                    <label>Email or Username</label>
+                    <input type="text" id="login-email" class="form-control" placeholder="Gmail address or username" autocomplete="username" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -1282,6 +1282,7 @@
         const SUPABASE_URL = 'https://tpnursespbmfxnaeqtnw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_Zgz3ziPSS266anwAtP2MOA_58ljR9Nz';
         const SUPABASE_THREADS_TABLE = 'forum_threads';
+        const SUPABASE_USERS_TABLE = 'forum_users';
         // Supabase Auth makes accounts real/shared across browsers and devices.
         // Passwords are handled by Supabase Auth instead of this HTML/localStorage.
         const supabaseClient = window.supabase && window.supabase.createClient
@@ -2770,6 +2771,7 @@
                     gmail, username, discord, role, isBanned: false
                 };
                 saveUserToDB(newUser);
+                await saveSharedUserProfile(newUser);
 
                 if (data && data.session && authUser) {
                     currentUser = makeForumUserFromAuth(authUser);
@@ -2795,21 +2797,78 @@
             }
         }
 
+        async function resolveLoginEmail(identifier) {
+            const value = String(identifier || '').trim();
+            if (!value) return '';
+
+            // Direct Gmail login.
+            if (value.includes('@')) return value.toLowerCase();
+
+            const normalizedUsername = value.toLowerCase();
+
+            // Fast local lookup (also supports legacy accounts on this browser).
+            const localMatch = registeredUsers.find(u =>
+                String(u.username || '').trim().toLowerCase() === normalizedUsername
+            );
+            if (localMatch && localMatch.gmail) return String(localMatch.gmail).trim().toLowerCase();
+
+            // Cross-device username login uses the shared Supabase profile table.
+            if (sharedForumConfigured()) {
+                try {
+                    const rows = await supabaseRequest(
+                        SUPABASE_USERS_TABLE + '?select=gmail,username&username=eq.' + encodeURIComponent(value) + '&limit=1'
+                    );
+                    if (Array.isArray(rows) && rows[0] && rows[0].gmail) {
+                        return String(rows[0].gmail).trim().toLowerCase();
+                    }
+                } catch (lookupError) {
+                    console.warn('Shared username lookup unavailable:', lookupError);
+                }
+            }
+
+            return '';
+        }
+
+        async function saveSharedUserProfile(user) {
+            if (!user || !user.gmail || !sharedForumConfigured()) return;
+            try {
+                await supabaseRequest(SUPABASE_USERS_TABLE + '?on_conflict=gmail', {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+                    body: JSON.stringify({
+                        gmail: String(user.gmail).trim().toLowerCase(),
+                        username: String(user.username || '').trim(),
+                        discord: String(user.discord || '').trim(),
+                        role: String(user.role || 'Player'),
+                        updated_at: new Date().toISOString()
+                    })
+                });
+            } catch (profileError) {
+                console.warn('Shared user profile sync unavailable:', profileError);
+            }
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
-            const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
+            const loginIdentifier = document.getElementById('login-email').value.trim();
             const passwordInput = document.getElementById('login-password').value;
 
             if (!supabaseClient) {
                 alert('Secure account service is not available. Please refresh the page and try again.');
                 return;
             }
-            if (!emailInput || !passwordInput) {
-                alert('Enter your Gmail and password.');
+            if (!loginIdentifier || !passwordInput) {
+                alert('Enter your email or username and password.');
                 return;
             }
 
             try {
+                const emailInput = await resolveLoginEmail(loginIdentifier);
+                if (!emailInput) {
+                    alert('No account was found for that email or username.');
+                    return;
+                }
+
                 let { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: emailInput,
                     password: passwordInput
@@ -2849,6 +2908,7 @@
                 currentUser = makeForumUserFromAuth(data.user, registeredUsers.find(u => u.gmail === emailInput));
                 currentUser.lastLoginAt = new Date().toISOString();
                 saveUserToDB(currentUser);
+                await saveSharedUserProfile(currentUser);
 
                 // Banned accounts are allowed to authenticate only so the site can
                 // display the ban notice. They receive no forum access.
