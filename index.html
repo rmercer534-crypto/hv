@@ -607,6 +607,13 @@
             flex: 1;
         }
 
+        /* Preserve the exact line breaks/spacing entered when a thread or reply was submitted. */
+        .post-content > div:last-child {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
         .details-table {
             width: 100%;
             border-collapse: collapse;
@@ -721,6 +728,38 @@
             cursor: pointer;
             color: var(--text-muted);
             font-size: 18px;
+        }
+
+        .curator-stat-grid {
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:14px;
+            margin-bottom:18px;
+        }
+        .curator-stat-card {
+            background:rgba(139,92,246,.08);
+            border:1px solid rgba(139,92,246,.35);
+            border-radius:10px;
+            padding:18px;
+        }
+        .curator-stat-number { font-size:30px; font-weight:800; margin-top:5px; }
+        .curator-user-card {
+            border:1px solid var(--border-color);
+            border-radius:8px;
+            padding:14px;
+            margin-bottom:10px;
+            background:rgba(0,0,0,.12);
+        }
+        .curator-user-grid {
+            display:grid;
+            grid-template-columns:minmax(0,1.4fr) minmax(180px,.8fr) auto;
+            gap:12px;
+            align-items:center;
+        }
+        .curator-user-meta { color:var(--text-muted); font-size:12px; margin-top:4px; }
+        @media (max-width:640px) {
+            .curator-stat-grid { grid-template-columns:1fr; }
+            .curator-user-grid { grid-template-columns:1fr; }
         }
 
         .landing-screen {
@@ -878,6 +917,9 @@
                     </div>
                     <div class="dropdown-item" id="admin-panel-menu-item" style="display:none;" onclick="navigateTo('admin-panel'); toggleProfileDropdown();">
                         <i class="fa-solid fa-shield-halved"></i> Admin Panel
+                    </div>
+                    <div class="dropdown-item" id="curator-panel-menu-item" style="display:none;" onclick="navigateTo('curator-panel'); toggleProfileDropdown();">
+                        <i class="fa-solid fa-crown"></i> Curator Panel
                     </div>
                     <div class="dropdown-item" onclick="navigateTo('account-details'); toggleProfileDropdown();">
                         <i class="fa-solid fa-user-gear"></i> Account Settings
@@ -1069,6 +1111,40 @@
 
                 <!-- Reply Form -->
                 <div id="reply-container" class="forum-card" style="padding: 16px;"></div>
+            </div>
+
+            <!-- VIEW: CURATOR PANEL (CURATOR OF PYTHONS ONLY) -->
+            <div id="view-curator-panel" class="hidden">
+                <div class="breadcrumb">
+                    <a onclick="navigateTo('forum-list')">Home</a>
+                    <span>&gt;</span>
+                    <span style="color: var(--text-main);">Curator Panel</span>
+                </div>
+                <div class="forum-card" style="padding:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
+                        <div>
+                            <h2 style="margin:0 0 5px;"><i class="fa-solid fa-crown"></i> Curator Panel</h2>
+                            <div style="color:var(--text-muted); font-size:13px;">Only the Curator of Pythons can access this panel.</div>
+                        </div>
+                        <button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    </div>
+                    <div class="curator-stat-grid">
+                        <div class="curator-stat-card">
+                            <div style="color:var(--text-muted); font-size:13px;"><i class="fa-solid fa-users"></i> Registered Users</div>
+                            <div class="curator-stat-number" id="curator-registered-count">0</div>
+                        </div>
+                        <div class="curator-stat-card">
+                            <div style="color:var(--text-muted); font-size:13px;"><i class="fa-solid fa-circle-user"></i> Logged In Users</div>
+                            <div class="curator-stat-number" id="curator-logged-in-count">0</div>
+                            <div style="color:var(--text-muted); font-size:11px; margin-top:4px;">Active on this browser's saved sessions</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px;">
+                        <h3 style="margin:0;"><i class="fa-solid fa-user-shield"></i> Manage User Roles</h3>
+                        <button class="btn" onclick="renderCuratorPanel()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div id="curator-users-container"></div>
+                </div>
             </div>
 
             <!-- VIEW 5: ADMIN PANEL (ADMINISTRATOR + CURATOR OF PYTHONS) -->
@@ -1444,6 +1520,8 @@
                 renderArchivedThreads();
             } else if (hash === 'admin-panel') {
                 if (canAccessAdminPanel()) renderAdminPanel(); else navigateTo('forum-list');
+            } else if (hash === 'curator-panel') {
+                if (canAccessCuratorPanel()) renderCuratorPanel(); else navigateTo('forum-list');
             } else if (hash.startsWith('thread-') && activeThreadId) {
                 const currentThread = threads.find(t => String(t.id) === String(activeThreadId));
                 if (currentThread) renderPosts(currentThread);
@@ -1478,6 +1556,8 @@
                 showCreateThreadView();
             } else if (hash === 'admin-panel') {
                 showAdminPanelView();
+            } else if (hash === 'curator-panel') {
+                showCuratorPanelView();
             } else if (hash === 'account-details') {
                 showAccountDetailsView();
             } else if (hash.startsWith('thread-')) {
@@ -1588,7 +1668,7 @@
         }
 
         function hideAllViews() {
-            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-admin-panel', 'view-account-details'];
+            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-curator-panel', 'view-admin-panel', 'view-account-details'];
             views.forEach(v => {
                 const el = document.getElementById(v);
                 if (el) el.classList.add('hidden');
@@ -1611,6 +1691,143 @@
             hideAllViews();
             document.getElementById('view-create-thread').classList.remove('hidden');
             updatePrefixMenuForRole();
+        }
+
+        function canAccessCuratorPanel() {
+            return !!currentUser && currentUser.role === 'Curator of Pythons';
+        }
+
+        function showCuratorPanelView() {
+            if (!canAccessCuratorPanel()) {
+                alert('Access denied. Only the Curator of Pythons can open the Curator Panel.');
+                navigateTo('forum-list');
+                return;
+            }
+            hideAllViews();
+            document.getElementById('view-curator-panel').classList.remove('hidden');
+            renderCuratorPanel();
+        }
+
+        function getCuratorPanelUsers() {
+            const users = Array.isArray(registeredUsers) ? registeredUsers : [];
+            const unique = new Map();
+            users.forEach(u => {
+                const key = String(u.gmail || u.username || '').trim().toLowerCase();
+                if (key) unique.set(key, u);
+            });
+            // Include identities visible in shared forum posts when they are not
+            // present in this browser's local registeredUsers list.
+            (Array.isArray(threads) ? threads : []).forEach(t => {
+                (Array.isArray(t.posts) ? t.posts : []).forEach(post => {
+                    const gmail = String(post.gmail || '').trim().toLowerCase();
+                    const username = String(post.author || '').trim();
+                    const key = gmail || username.toLowerCase();
+                    if (!key || unique.has(key)) return;
+                    unique.set(key, { gmail, username, discord: '', password: '', role: post.role || 'Player', isBanned: post.role === 'Banned' });
+                });
+            });
+            return Array.from(unique.values());
+        }
+
+        function renderCuratorPanel() {
+            if (!canAccessCuratorPanel()) return;
+            const users = getCuratorPanelUsers();
+            const registeredCount = users.length;
+            const activeSavedEmail = String(localStorage.getItem(AUTH_EMAIL_KEY) || '').trim().toLowerCase();
+            users.forEach(u => {
+                u.isLoggedIn = !!activeSavedEmail && String(u.gmail || '').trim().toLowerCase() === activeSavedEmail;
+            });
+            const loggedInCount = users.filter(u => u.isLoggedIn === true).length;
+            const registeredEl = document.getElementById('curator-registered-count');
+            const loggedInEl = document.getElementById('curator-logged-in-count');
+            if (registeredEl) registeredEl.textContent = registeredCount;
+            if (loggedInEl) loggedInEl.textContent = loggedInCount;
+
+            const container = document.getElementById('curator-users-container');
+            if (!container) return;
+            if (!users.length) {
+                container.innerHTML = '<div class="curator-user-card" style="text-align:center;color:var(--text-muted);">No registered users found.</div>';
+                return;
+            }
+
+            container.innerHTML = users.map((u, index) => {
+                const username = escapeBannedText(u.username || 'Unknown User');
+                const gmail = escapeBannedText(u.gmail || '');
+                const role = String(u.role || 'Player');
+                const safeIndex = index;
+                const isSelf = String(u.gmail || '').toLowerCase() === String(currentUser.gmail || '').toLowerCase();
+                const banned = !!u.isBanned || role === 'Banned';
+                const status = banned ? 'Banned' : (u.isLoggedIn === true ? 'Logged in' : 'Not logged in');
+                const options = ['Player','Administrator','Curator of Pythons','Curator of Chilling']
+                    .map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${r}</option>`).join('');
+                return `
+                    <div class="curator-user-card">
+                        <div class="curator-user-grid">
+                            <div>
+                                <strong>${username}</strong>
+                                <div class="curator-user-meta">${gmail || 'Gmail not available'} · ${escapeBannedText(status)}</div>
+                            </div>
+                            <select class="form-control" id="curator-role-${safeIndex}" ${isSelf || banned ? 'disabled' : ''}>
+                                ${banned ? '<option value="Banned" selected>Banned</option>' : options}
+                            </select>
+                            <button class="btn btn-yellow" onclick="changeUserRoleFromCurator(${safeIndex})" ${isSelf || banned ? 'disabled' : ''}>
+                                <i class="fa-solid fa-user-check"></i> Give Role
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
+            window.__curatorPanelUsers = users;
+        }
+
+        async function changeUserRoleFromCurator(index) {
+            if (!canAccessCuratorPanel()) {
+                alert('Only the Curator of Pythons can change user roles.');
+                return;
+            }
+            const users = window.__curatorPanelUsers || [];
+            const target = users[index];
+            if (!target) return;
+            if (String(target.gmail || '').toLowerCase() === String(currentUser.gmail || '').toLowerCase()) {
+                alert('You cannot change your own Curator of Pythons role from this panel.');
+                return;
+            }
+            const select = document.getElementById(`curator-role-${index}`);
+            const newRole = select ? select.value : 'Player';
+            if (!['Player','Administrator','Curator of Pythons','Curator of Chilling'].includes(newRole)) return;
+
+            const local = registeredUsers.find(u =>
+                (target.gmail && String(u.gmail || '').toLowerCase() === String(target.gmail).toLowerCase()) ||
+                (!target.gmail && String(u.username || '').toLowerCase() === String(target.username || '').toLowerCase())
+            );
+            const updatedUser = local || { ...target };
+            updatedUser.role = newRole;
+            updatedUser.isBanned = false;
+            delete updatedUser.banDetails;
+            saveUserToDB(updatedUser);
+
+            // Propagate the role to every shared forum post for this account.
+            const targetEmail = String(updatedUser.gmail || target.gmail || '').trim().toLowerCase();
+            const targetName = String(updatedUser.username || target.username || '').trim().toLowerCase();
+            for (const t of threads) {
+                if (!Array.isArray(t.posts)) continue;
+                let updated = false;
+                t.posts.forEach(post => {
+                    const sameEmail = targetEmail && String(post.gmail || '').trim().toLowerCase() === targetEmail;
+                    const sameName = !targetEmail && targetName && String(post.author || '').trim().toLowerCase() === targetName;
+                    if (sameEmail || sameName) {
+                        post.role = newRole;
+                        updated = true;
+                    }
+                });
+                if (updated) {
+                    if (t.authorGmail && String(t.authorGmail).trim().toLowerCase() === targetEmail) t.authorRole = newRole;
+                    await saveThreadToDB(t, true);
+                }
+            }
+
+            saveUsersLocally();
+            alert(`${updatedUser.username || 'User'} is now ${newRole}.`);
+            reloadWebsite('curator-panel');
         }
 
         function canAccessAdminPanel() {
@@ -2491,7 +2708,9 @@
             saveUserToDB(newUser);
             
             currentUser = newUser;
+            currentUser.lastLoginAt = new Date().toISOString();
             localStorage.setItem(AUTH_EMAIL_KEY, newUser.gmail);
+            localStorage.setItem('pythons_family_last_login_' + newUser.gmail, currentUser.lastLoginAt);
             
             updateAuthUI();
             updatePrefixMenuForRole();
@@ -2512,6 +2731,8 @@
             }
 
             currentUser = user;
+            currentUser.lastLoginAt = new Date().toISOString();
+            localStorage.setItem('pythons_family_last_login_' + user.gmail, currentUser.lastLoginAt);
 
             // Banned accounts are allowed to authenticate only so the site can
             // display the ban notice. They receive no forum access.
@@ -2530,6 +2751,7 @@
         function logout() {
             currentUser = null;
             localStorage.removeItem(AUTH_EMAIL_KEY);
+            if (currentUser && currentUser.gmail) localStorage.removeItem('pythons_family_last_login_' + currentUser.gmail);
             updateAuthUI();
             navigateTo('forum-list');
         }
@@ -2615,9 +2837,13 @@
                 roleBadge.className = `role-badge ${getRoleClass(currentUser.role)}`;
                 const adminPanelItem = document.getElementById('admin-panel-menu-item');
                 if (adminPanelItem) adminPanelItem.style.display = canAccessAdminPanel() ? 'flex' : 'none';
+                const curatorPanelItem = document.getElementById('curator-panel-menu-item');
+                if (curatorPanelItem) curatorPanelItem.style.display = canAccessCuratorPanel() ? 'flex' : 'none';
             } else {
                 const adminPanelItem = document.getElementById('admin-panel-menu-item');
                 if (adminPanelItem) adminPanelItem.style.display = 'none';
+                const curatorPanelItem = document.getElementById('curator-panel-menu-item');
+                if (curatorPanelItem) curatorPanelItem.style.display = 'none';
                 guestNav.classList.remove('hidden');
                 userNav.classList.add('hidden');
             }
