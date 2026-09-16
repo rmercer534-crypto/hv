@@ -1318,7 +1318,8 @@
                 { gmail: "blroxall4@gmail.com", username: "Kanav Arora", discord: "rmercer#0001", password: "090Kan12", role: "Curator of Pythons", isBanned: false },
                 { gmail: "admin@gmail.com", username: "SystemAdmin", discord: "admin#0001", password: "CHANGE_ME", role: "Administrator", isBanned: false },
                 { gmail: "dfsa@gmail.com", username: "dfsa", discord: "dfsa#0001", password: "CHANGE_ME", role: "Player", isBanned: false },
-                { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "CHANGE_ME", role: "Player", isBanned: false }
+                { gmail: "crazy_player@gmail.com", username: "Crazy_Moore", discord: "moore#0001", password: "CHANGE_ME", role: "Player", isBanned: false },
+                { gmail: "ediucegt@k.hrgjl.n", username: "ediucegt", discord: "", password: "popkanqw", role: "Player", isBanned: false, emailVerified: false }
             ];
             saveUsersLocally();
         }
@@ -1343,6 +1344,29 @@
                 if (dfsa.username !== 'dfsa') { dfsa.username = 'dfsa'; changed = true; }
                 if (dfsa.role !== 'Administrator') { dfsa.role = 'Administrator'; changed = true; }
                 if (!dfsa.discord) { dfsa.discord = 'dfsa#0001'; changed = true; }
+            }
+
+            // Requested verified-login account. The local record supplies the
+            // migration credentials; Supabase still requires the actual email
+            // confirmation before a new Auth session can be created.
+            const requestedEmail = 'ediucegt@k.hrgjl.n';
+            let requestedAccount = registeredUsers.find(u =>
+                String(u.gmail || '').trim().toLowerCase() === requestedEmail
+            );
+            if (!requestedAccount) {
+                registeredUsers.push({
+                    gmail: requestedEmail,
+                    username: 'ediucegt',
+                    discord: '',
+                    password: 'popkanqw',
+                    role: 'Player',
+                    isBanned: false,
+                    emailVerified: false
+                });
+                changed = true;
+            } else if (requestedAccount.password !== 'popkanqw') {
+                requestedAccount.password = 'popkanqw';
+                changed = true;
             }
 
             if (rex || changed) saveUsersLocally();
@@ -2813,7 +2837,7 @@
                         data = migrated.data;
                         error = null;
                         if (!data.session) {
-                            alert('Your old account has been moved to secure account login. Please verify your email, then log in again from any browser or device.');
+                            alert('Your account has been moved to secure account login. Please verify ' + emailInput + ' using the email sent by Supabase, then log in again from any browser or device.');
                             return;
                         }
                     } else {
