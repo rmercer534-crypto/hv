@@ -1638,6 +1638,25 @@
             };
         }
 
+        async function hydrateUserFromSharedProfile(user) {
+            if (!user || !user.gmail || !sharedForumConfigured()) return user;
+            try {
+                const rows = await supabaseRequest(
+                    SUPABASE_USERS_TABLE + '?select=gmail,username,discord,role&gmail=eq.' + encodeURIComponent(String(user.gmail).trim().toLowerCase()) + '&limit=1'
+                );
+                if (Array.isArray(rows) && rows[0]) {
+                    const profile = rows[0];
+                    if (profile.username) user.username = profile.username;
+                    if (profile.discord !== undefined) user.discord = profile.discord;
+                    if (profile.role) user.role = profile.role;
+                    saveUserToDB(user);
+                }
+            } catch (error) {
+                console.warn('Could not load shared user role:', error);
+            }
+            return user;
+        }
+
         async function initializeAuthentication() {
             currentUser = null;
 
@@ -1652,6 +1671,7 @@
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session && session.user) {
                         currentUser = makeForumUserFromAuth(session.user);
+                        await hydrateUserFromSharedProfile(currentUser);
                         saveUserToDB(currentUser);
                     }
                 } catch (error) {
@@ -1850,6 +1870,10 @@
             updatedUser.isBanned = false;
             delete updatedUser.banDetails;
             saveUserToDB(updatedUser);
+
+            // Persist the role in the shared user profile so the new privileges
+            // follow the account to every browser/device.
+            await saveSharedUserProfile(updatedUser);
 
             // Propagate the role to every shared forum post for this account.
             const targetEmail = String(updatedUser.gmail || target.gmail || '').trim().toLowerCase();
@@ -2906,6 +2930,10 @@
 
                 if (!data?.user) throw new Error('Login succeeded but no account was returned.');
                 currentUser = makeForumUserFromAuth(data.user, registeredUsers.find(u => u.gmail === emailInput));
+                // The shared profile is the source of truth for roles. This is what
+                // makes a Curator-assigned Administrator/Curator role work on a
+                // different browser or device after the next login.
+                await hydrateUserFromSharedProfile(currentUser);
                 currentUser.lastLoginAt = new Date().toISOString();
                 saveUserToDB(currentUser);
                 await saveSharedUserProfile(currentUser);
@@ -3046,9 +3074,11 @@
                 }
                 if (session && session.user && !currentUser) {
                     currentUser = makeForumUserFromAuth(session.user);
-                    saveUserToDB(currentUser);
-                    updateAuthUI();
-                    updatePrefixMenuForRole();
+                    hydrateUserFromSharedProfile(currentUser).then(() => {
+                        saveUserToDB(currentUser);
+                        updateAuthUI();
+                        updatePrefixMenuForRole();
+                    });
                 }
             });
         }
