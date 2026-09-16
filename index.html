@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pythons Family | Forum</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-main: #18191c;
@@ -1281,6 +1282,11 @@
         const SUPABASE_URL = 'https://tpnursespbmfxnaeqtnw.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_Zgz3ziPSS266anwAtP2MOA_58ljR9Nz';
         const SUPABASE_THREADS_TABLE = 'forum_threads';
+        // Supabase Auth makes accounts real/shared across browsers and devices.
+        // Passwords are handled by Supabase Auth instead of this HTML/localStorage.
+        const supabaseClient = window.supabase && window.supabase.createClient
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
 
         const LOCAL_USERS_KEY = 'pythons_family_forum_users_v2';
         const LOCAL_THREADS_KEY = 'pythons_family_forum_threads_v2';
@@ -1587,31 +1593,44 @@
 
         const AUTH_EMAIL_KEY = 'pythons_family_auth_email_v2';
 
-        window.addEventListener('DOMContentLoaded', () => {
-            // Authentication rules:
-            // 1. A visitor who has never logged in on this browser must log in or register.
-            // 2. After a successful login/registration, the account remains signed in
-            //    when the website is closed and opened again.
-            // 3. Normal page/action auto-refresh also keeps the same account signed in.
-            // 4. Clicking Logout explicitly removes the persistent login.
-            // 5. Use a new auth key so old versions cannot automatically restore dfsa/admin.
+        function makeForumUserFromAuth(authUser, fallbackLocal = null) {
+            if (!authUser) return null;
+            const meta = authUser.user_metadata || {};
+            const email = String(authUser.email || fallbackLocal?.gmail || '').trim().toLowerCase();
+            const local = registeredUsers.find(u => String(u.gmail || '').trim().toLowerCase() === email);
+            const role = String(meta.role || local?.role || 'Player');
+            return {
+                ...(local || {}),
+                id: authUser.id,
+                gmail: email,
+                username: String(meta.username || local?.username || email.split('@')[0]),
+                discord: String(meta.discord || local?.discord || ''),
+                role,
+                isBanned: !!(local?.isBanned || meta.isBanned),
+                banDetails: local?.banDetails || meta.banDetails || undefined,
+                createdAt: authUser.created_at || local?.createdAt || '',
+                lastLoginAt: new Date().toISOString()
+            };
+        }
+
+        async function initializeAuthentication() {
             currentUser = null;
 
-            // Remove legacy session/persistent keys from older versions. They are never
-            // used to authenticate the visitor anymore.
+            // Remove authentication keys used by older versions. Supabase Auth is now
+            // the source of truth, so a localStorage email can never log someone in by itself.
             sessionStorage.removeItem('pythons_family_session_email');
             localStorage.removeItem('pythons_family_logged_email');
+            localStorage.removeItem(AUTH_EMAIL_KEY);
 
-            const savedAuthEmail = localStorage.getItem(AUTH_EMAIL_KEY);
-            if (savedAuthEmail) {
-                const foundUser = registeredUsers.find(u =>
-                    u.gmail && u.gmail.toLowerCase() === savedAuthEmail.toLowerCase()
-                );
-                if (foundUser) {
-                    // Keep banned accounts signed in only to show the ban screen.
-                    currentUser = foundUser;
-                } else {
-                    localStorage.removeItem(AUTH_EMAIL_KEY);
+            if (supabaseClient) {
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session && session.user) {
+                        currentUser = makeForumUserFromAuth(session.user);
+                        saveUserToDB(currentUser);
+                    }
+                } catch (error) {
+                    console.error('Could not restore Supabase login:', error);
                 }
             }
 
@@ -1619,8 +1638,6 @@
             if (enforceBanAccess()) return;
             updatePrefixMenuForRole();
 
-            // Never create an automatic guest/admin session. A visitor must log in
-            // or register before entering the forum.
             if (!currentUser) {
                 document.getElementById('landing-screen').style.display = 'flex';
                 document.getElementById('forum-app').style.display = 'none';
@@ -1632,6 +1649,10 @@
             document.getElementById('landing-screen').style.display = 'none';
             document.getElementById('forum-app').style.display = 'block';
             handleRoute();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeAuthentication();
         });
 
         function timeAgo(dateString) {
@@ -2682,76 +2703,155 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function handleRegister(e) {
+        async function handleRegister(e) {
             e.preventDefault();
             const gmail = document.getElementById('reg-gmail').value.trim().toLowerCase();
             const username = document.getElementById('reg-username').value.trim();
             const discord = document.getElementById('reg-discord').value.trim();
             const password = document.getElementById('reg-password').value;
 
+            if (!supabaseClient) {
+                alert('Secure account service is not available. Please refresh the page and try again.');
+                return;
+            }
             if (password.length < 8) {
                 alert('Password must be at least 8 characters long.');
                 document.getElementById('reg-password').focus();
                 return;
             }
-
-            if (registeredUsers.find(u => u.gmail === gmail)) {
-                alert("Account already exists!");
+            if (!gmail || !username) {
+                alert('Gmail and username are required.');
                 return;
             }
 
+            // The role is stored in Auth metadata for the initial account creation.
+            // Administrator/Curator access should still be controlled by trusted
+            // server-side rules for production use.
             let role = 'Player';
             if (gmail === 'blroxall4@gmail.com') role = 'Curator of Pythons';
             else if (gmail.includes('admin')) role = 'Administrator';
 
-            const newUser = { gmail, username, discord, password, role, isBanned: false };
-            saveUserToDB(newUser);
-            
-            currentUser = newUser;
-            currentUser.lastLoginAt = new Date().toISOString();
-            localStorage.setItem(AUTH_EMAIL_KEY, newUser.gmail);
-            localStorage.setItem('pythons_family_last_login_' + newUser.gmail, currentUser.lastLoginAt);
-            
-            updateAuthUI();
-            updatePrefixMenuForRole();
-            document.getElementById('register-form').reset();
-            closeModal('register-modal');
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: gmail,
+                    password,
+                    options: {
+                        data: { username, discord, role }
+                    }
+                });
+                if (error) throw error;
+
+                const authUser = data && data.user;
+                const newUser = authUser ? makeForumUserFromAuth(authUser) : {
+                    gmail, username, discord, role, isBanned: false
+                };
+                saveUserToDB(newUser);
+
+                if (data && data.session && authUser) {
+                    currentUser = makeForumUserFromAuth(authUser);
+                    updateAuthUI();
+                    updatePrefixMenuForRole();
+                    document.getElementById('register-form').reset();
+                    closeModal('register-modal');
+                    document.getElementById('landing-screen').style.display = 'none';
+                    document.getElementById('forum-app').style.display = 'block';
+                    handleRoute();
+                } else {
+                    // When Supabase Confirm Email is enabled, no session is created until
+                    // the person clicks the verification link. This is required for the
+                    // account to work securely on another browser/device.
+                    alert('Account created successfully. Please check your email and verify your account. After verification, you can log in from any browser or device with your Gmail and password.');
+                    document.getElementById('register-form').reset();
+                    closeModal('register-modal');
+                    openModal('login-modal');
+                }
+            } catch (error) {
+                console.error('Registration failed:', error);
+                alert('Registration failed.\n\n' + (error?.message || error));
+            }
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const emailInput = document.getElementById('login-email').value.trim().toLowerCase();
             const passwordInput = document.getElementById('login-password').value;
 
-            const user = registeredUsers.find(u => u.gmail === emailInput && u.password === passwordInput);
-
-            if (!user) {
-                alert("Invalid credentials.");
+            if (!supabaseClient) {
+                alert('Secure account service is not available. Please refresh the page and try again.');
+                return;
+            }
+            if (!emailInput || !passwordInput) {
+                alert('Enter your Gmail and password.');
                 return;
             }
 
-            currentUser = user;
-            currentUser.lastLoginAt = new Date().toISOString();
-            localStorage.setItem('pythons_family_last_login_' + user.gmail, currentUser.lastLoginAt);
+            try {
+                let { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: emailInput,
+                    password: passwordInput
+                });
 
-            // Banned accounts are allowed to authenticate only so the site can
-            // display the ban notice. They receive no forum access.
-            if (user.isBanned) {
-                localStorage.setItem(AUTH_EMAIL_KEY, user.gmail);
+                // One-time migration for accounts created by the old HTML/localStorage
+                // system. Once migrated, future logins work on every device through Auth.
+                if (error) {
+                    const oldUser = registeredUsers.find(u =>
+                        String(u.gmail || '').toLowerCase() === emailInput && u.password === passwordInput
+                    );
+                    if (oldUser) {
+                        const migrated = await supabaseClient.auth.signUp({
+                            email: emailInput,
+                            password: passwordInput,
+                            options: {
+                                data: {
+                                    username: oldUser.username || emailInput.split('@')[0],
+                                    discord: oldUser.discord || '',
+                                    role: oldUser.role || 'Player'
+                                }
+                            }
+                        });
+                        if (migrated.error) throw error;
+                        data = migrated.data;
+                        error = null;
+                        if (!data.session) {
+                            alert('Your old account has been moved to secure account login. Please verify your email, then log in again from any browser or device.');
+                            return;
+                        }
+                    } else {
+                        throw error;
+                    }
+                }
+
+                if (!data?.user) throw new Error('Login succeeded but no account was returned.');
+                currentUser = makeForumUserFromAuth(data.user, registeredUsers.find(u => u.gmail === emailInput));
+                currentUser.lastLoginAt = new Date().toISOString();
+                saveUserToDB(currentUser);
+
+                // Banned accounts are allowed to authenticate only so the site can
+                // display the ban notice. They receive no forum access.
                 updateAuthUI();
-                return;
+                if (enforceBanAccess()) return;
+                updatePrefixMenuForRole();
+                document.getElementById('login-form').reset();
+                closeModal('login-modal');
+                document.getElementById('landing-screen').style.display = 'none';
+                document.getElementById('forum-app').style.display = 'block';
+                handleRoute();
+            } catch (error) {
+                console.error('Login failed:', error);
+                alert('Invalid credentials or account not verified.\n\n' + (error?.message || error));
             }
-            localStorage.setItem(AUTH_EMAIL_KEY, user.gmail);
-            updateAuthUI();
-            updatePrefixMenuForRole();
-            document.getElementById('login-form').reset();
-            closeModal('login-modal');
         }
 
-        function logout() {
+        async function logout() {
+            try {
+                if (supabaseClient) await supabaseClient.auth.signOut();
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+            const oldEmail = currentUser && currentUser.gmail;
             currentUser = null;
             localStorage.removeItem(AUTH_EMAIL_KEY);
-            if (currentUser && currentUser.gmail) localStorage.removeItem('pythons_family_last_login_' + currentUser.gmail);
+            if (oldEmail) localStorage.removeItem('pythons_family_last_login_' + oldEmail);
             updateAuthUI();
             navigateTo('forum-list');
         }
@@ -2852,6 +2952,21 @@
         function toggleProfileDropdown() {
             const dd = document.getElementById('profile-dropdown');
             dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+        }
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    updateAuthUI();
+                    return;
+                }
+                if (session && session.user && !currentUser) {
+                    currentUser = makeForumUserFromAuth(session.user);
+                    saveUserToDB(currentUser);
+                    updateAuthUI();
+                    updatePrefixMenuForRole();
+                }
+            });
         }
     </script>
 </body>
