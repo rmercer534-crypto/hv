@@ -433,6 +433,29 @@
             box-shadow: 0 0 8px rgba(139, 92, 246, .28), inset 0 1px 0 rgba(255,255,255,.16);
         }
 
+        /* Assistant Administrator: intentionally identical to Player privileges. */
+        .role-assistant-administrator {
+            background: linear-gradient(180deg, #c7c7c7 0%, #a9a9a9 100%);
+            color: #111;
+            border: 1px solid #8d8d8d;
+        }
+
+        /* Senior Administrator: distinct senior-staff badge. */
+        .role-senior-administrator {
+            background: linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%);
+            color: #fff;
+            border: 1px solid #7f1d1d;
+            box-shadow: 0 0 8px rgba(220, 38, 38, .28), inset 0 1px 0 rgba(255,255,255,.14);
+        }
+
+        /* Curator of Administrator: same privilege level as Curator of Pythons. */
+        .role-curator-of-administrator {
+            background: linear-gradient(180deg, #a855f7 0%, #6d28d9 100%);
+            color: #fff;
+            border: 1px solid #6b21a8;
+            box-shadow: 0 0 8px rgba(139, 92, 246, .30), inset 0 1px 0 rgba(255,255,255,.16);
+        }
+
         /* Administrator: red, clearly higher-privilege */
         .role-administrator {
             background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
@@ -1671,7 +1694,7 @@
                         if (postEmail === email && post.role) matchingRoles.push(String(post.role));
                     });
                 });
-                const validRoles = ['Player', 'Administrator', 'Curator of Pythons', 'Curator of Chilling', 'Banned'];
+                const validRoles = ['Player', 'Assistant Administrator', 'Administrator', 'Senior Administrator', 'Curator of Administrator', 'Curator of Pythons', 'Curator of Chilling', 'Banned'];
                 const postRole = [...matchingRoles].reverse().find(r => validRoles.includes(r));
                 if (!profileFound && postRole) user.role = postRole;
             } catch (error) {
@@ -1862,7 +1885,7 @@
                 const isSelf = String(u.gmail || '').toLowerCase() === String(currentUser.gmail || '').toLowerCase();
                 const banned = !!u.isBanned || role === 'Banned';
                 const status = banned ? 'Banned' : (u.isLoggedIn === true ? 'Logged in' : 'Not logged in');
-                const options = ['Player','Administrator','Curator of Pythons','Curator of Chilling']
+                const options = ['Player','Assistant Administrator','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling']
                     .map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${r}</option>`).join('');
                 return `
                     <div class="curator-user-card">
@@ -1897,7 +1920,7 @@
             }
             const select = document.getElementById(`curator-role-${index}`);
             const newRole = select ? select.value : 'Player';
-            if (!['Player','Administrator','Curator of Pythons','Curator of Chilling'].includes(newRole)) return;
+            if (!['Player','Assistant Administrator','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling'].includes(newRole)) return;
 
             const local = registeredUsers.find(u =>
                 (target.gmail && String(u.gmail || '').toLowerCase() === String(target.gmail).toLowerCase()) ||
@@ -1945,7 +1968,9 @@
         function canAccessAdminPanel() {
             return !!currentUser && (
                 currentUser.role === 'Administrator' ||
-                currentUser.role === 'Curator of Pythons'
+                currentUser.role === 'Senior Administrator' ||
+                currentUser.role === 'Curator of Pythons' ||
+                currentUser.role === 'Curator of Administrator'
             );
         }
 
@@ -2192,7 +2217,10 @@
             const normalized = String(role || 'Player').trim().toLowerCase();
             const roleMap = {
                 'player': 'role-player',
+                'assistant administrator': 'role-assistant-administrator',
                 'administrator': 'role-administrator',
+                'senior administrator': 'role-senior-administrator',
+                'curator of administrator': 'role-curator-of-administrator',
                 'curator of chilling': 'role-curator-of-chilling',
                 'curator of pythons': 'role-curator-of-pythons',
                 'banned': 'role-banned'
@@ -2200,24 +2228,43 @@
             return roleMap[normalized] || 'role-player';
         }
 
+        // ROLE PERMISSIONS
+        // Assistant Administrator is intentionally treated exactly like a Player.
+        // Curator of Administrator has Curator of Pythons privileges except the Curator Panel.
+        // Senior Administrator has Administrator-style access plus ban/unban.
         function isAdministratorUser() {
-            return !!currentUser && currentUser.role === 'Administrator';
-        }
-
-        // IMPORTANT is a restricted prefix: only Administrator and Curator of Pythons may use it.
-        function canUseImportantPrefix() {
             return !!currentUser && (
                 currentUser.role === 'Administrator' ||
-                currentUser.role === 'Curator of Pythons'
+                currentUser.role === 'Senior Administrator' ||
+                currentUser.role === 'Curator of Administrator'
             );
         }
 
-        // GrandRP-style forum staff privileges: both Administrator and Curator of Chilling
-        // are full forum moderators. The role name is kept visible to users.
+        function hasFullCuratorAccess() {
+            return !!currentUser && (
+                currentUser.role === 'Curator of Pythons' ||
+                currentUser.role === 'Curator of Administrator'
+            );
+        }
+
+        // IMPORTANT is available to Administrator, Senior Administrator, and both
+        // full-curator roles. Assistant Administrator remains a normal Player.
+        function canUseImportantPrefix() {
+            return !!currentUser && (
+                currentUser.role === 'Administrator' ||
+                currentUser.role === 'Senior Administrator' ||
+                currentUser.role === 'Curator of Pythons' ||
+                currentUser.role === 'Curator of Administrator'
+            );
+        }
+
+        // Normal staff/forum moderation. Curator of Chilling keeps its existing
+        // staff access; Assistant Administrator remains a Player.
         function isCuratorUser() {
             return !!currentUser && (
                 currentUser.role === 'Curator of Chilling' ||
-                currentUser.role === 'Curator of Pythons'
+                currentUser.role === 'Curator of Pythons' ||
+                currentUser.role === 'Curator of Administrator'
             );
         }
 
@@ -2225,12 +2272,13 @@
             return !!currentUser && (isCuratorUser() || isAdministratorUser());
         }
 
-        // Ban/unban permission: Administrator and Curator of Pythons only.
-        // Curator of Chilling does not receive these controls.
+        // Ban/unban: Curator of Pythons, Curator of Administrator, and Senior
+        // Administrator only. Administrator explicitly does NOT get ban/unban.
         function canBanOrUnbanUsers() {
             return !!currentUser && (
-                currentUser.role === 'Administrator' ||
-                currentUser.role === 'Curator of Pythons'
+                currentUser.role === 'Curator of Pythons' ||
+                currentUser.role === 'Curator of Administrator' ||
+                currentUser.role === 'Senior Administrator'
             );
         }
 
@@ -2559,7 +2607,7 @@
 
         function openBanModal(gmail, username) {
             if (!canBanOrUnbanUsers()) {
-                alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                alert('Only Curator of Pythons, Curator of Administrator, and Senior Administrator can ban or unban users.');
                 return;
             }
 
@@ -2622,7 +2670,7 @@
 
             try {
                 if (!canBanOrUnbanUsers()) {
-                    alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                    alert('Only Curator of Pythons, Curator of Administrator, and Senior Administrator can ban or unban users.');
                     return false;
                 }
 
@@ -2701,7 +2749,7 @@
         async function unbanUser(gmail) {
             try {
                 if (!canBanOrUnbanUsers()) {
-                    alert('Only Administrator and Curator of Pythons can ban or unban users.');
+                    alert('Only Curator of Pythons, Curator of Administrator, and Senior Administrator can ban or unban users.');
                     return;
                 }
 
