@@ -433,11 +433,12 @@
             box-shadow: 0 0 8px rgba(139, 92, 246, .28), inset 0 1px 0 rgba(255,255,255,.16);
         }
 
-        /* Assistant Administrator: intentionally identical to Player privileges. */
+        /* Assistant Administrator: green badge; permissions remain limited. */
         .role-assistant-administrator {
-            background: linear-gradient(180deg, #c7c7c7 0%, #a9a9a9 100%);
-            color: #111;
-            border: 1px solid #8d8d8d;
+            background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
+            color: #fff;
+            border: 1px solid #15803d;
+            box-shadow: 0 0 8px rgba(34, 197, 94, .24), inset 0 1px 0 rgba(255,255,255,.16);
         }
 
         /* Senior Administrator: distinct senior-staff badge. */
@@ -448,12 +449,12 @@
             box-shadow: 0 0 8px rgba(220, 38, 38, .28), inset 0 1px 0 rgba(255,255,255,.14);
         }
 
-        /* Curator of Administrator: same privilege level as Curator of Pythons. */
+        /* Curator of Administrator: lighter purple than Curator of Pythons. */
         .role-curator-of-administrator {
-            background: linear-gradient(180deg, #a855f7 0%, #6d28d9 100%);
+            background: linear-gradient(180deg, #c084fc 0%, #a855f7 100%);
             color: #fff;
-            border: 1px solid #6b21a8;
-            box-shadow: 0 0 8px rgba(139, 92, 246, .30), inset 0 1px 0 rgba(255,255,255,.16);
+            border: 1px solid #9333ea;
+            box-shadow: 0 0 8px rgba(192, 132, 252, .32), inset 0 1px 0 rgba(255,255,255,.18);
         }
 
         /* Administrator: red, clearly higher-privilege */
@@ -2105,14 +2106,34 @@
 
             const adminControls = document.getElementById('admin-controls');
             const isStaff = isStaffUser();
-            
-            if (isStaff) {
+            const isAssistant = isAssistantAdministrator();
+
+            if (isStaff || isAssistant) {
                 adminControls.classList.remove('hidden');
-                document.getElementById('admin-status-select').value = thread.prefix;
-                document.getElementById('lock-btn-text').innerText = thread.isLocked ? "Unlock Thread" : "Lock Thread";
-                document.getElementById('archive-btn').innerHTML = thread.isArchived ? 
-                    '<i class="fa-solid fa-box-open"></i> Restore from Archive' : 
-                    '<i class="fa-solid fa-box-archive"></i> Move to Archive';
+
+                const statusSelect = document.getElementById('admin-status-select');
+                const archiveButton = document.getElementById('archive-btn');
+                const deleteButton = adminControls.querySelector('button.btn-red[onclick="deleteActiveThread()"]');
+
+                if (statusSelect) {
+                    statusSelect.value = thread.prefix;
+                    statusSelect.style.display = isAssistant ? 'none' : '';
+                }
+
+                const lockButton = adminControls.querySelector('button[onclick="toggleLockThread()"]');
+                if (lockButton) lockButton.style.display = '';
+
+                if (archiveButton) {
+                    archiveButton.style.display = isAssistant ? 'none' : '';
+                    archiveButton.innerHTML = thread.isArchived ?
+                        '<i class="fa-solid fa-box-open"></i> Restore from Archive' :
+                        '<i class="fa-solid fa-box-archive"></i> Move to Archive';
+                }
+
+                if (deleteButton) deleteButton.style.display = isAssistant ? 'none' : '';
+
+                document.getElementById('lock-btn-text').innerText =
+                    thread.isLocked ? "Unlock Thread" : "Lock Thread";
             } else {
                 adminControls.classList.add('hidden');
             }
@@ -2229,7 +2250,8 @@
         }
 
         // ROLE PERMISSIONS
-        // Assistant Administrator is intentionally treated exactly like a Player.
+        // Assistant Administrator has limited thread moderation only:
+        // lock/unlock + reply in locked threads, with no prefix/ban/unban access.
         // Curator of Administrator has Curator of Pythons privileges except the Curator Panel.
         // Senior Administrator has Administrator-style access plus ban/unban.
         function isAdministratorUser() {
@@ -2272,6 +2294,21 @@
             return !!currentUser && (isCuratorUser() || isAdministratorUser());
         }
 
+        // Assistant Administrator has limited thread moderation:
+        // lock/unlock threads and reply inside locked threads only.
+        // They cannot change prefixes or ban/unban users.
+        function isAssistantAdministrator() {
+            return !!currentUser && currentUser.role === 'Assistant Administrator';
+        }
+
+        function canManageThreadLock() {
+            return isStaffUser() || isAssistantAdministrator();
+        }
+
+        function canReplyInLockedThread() {
+            return isStaffUser() || isAssistantAdministrator();
+        }
+
         // Ban/unban: Curator of Pythons, Curator of Administrator, and Senior
         // Administrator only. Administrator explicitly does NOT get ban/unban.
         function canBanOrUnbanUsers() {
@@ -2293,6 +2330,16 @@
             if (importantOption) importantOption.style.display = canUseImportantPrefix() ? 'block' : 'none';
             if (adminImportantOption) adminImportantOption.style.display = canUseImportantPrefix() ? '' : 'none';
 
+            if (isAssistantAdministrator()) {
+                selectedPrefix = 'Pending review';
+                prefixButton.style.display = 'none';
+                staffOptions.classList.add('hidden');
+                const prefixMenu = document.getElementById('prefix-menu');
+                if (prefixMenu) prefixMenu.style.display = 'none';
+                return;
+            }
+
+            prefixButton.style.display = '';
             if (!canUseImportantPrefix() && selectedPrefix === 'IMPORTANT') {
                 selectedPrefix = 'Pending review';
             }
@@ -2314,12 +2361,18 @@
         }
 
         function togglePrefixMenu() {
+            if (isAssistantAdministrator()) return;
             updatePrefixMenuForRole();
             const menu = document.getElementById('prefix-menu');
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
         }
 
         function selectPrefix(prefix) {
+            if (isAssistantAdministrator()) {
+                alert('Assistant Administrator does not have access to change thread prefixes.');
+                return;
+            }
+
             // IMPORTANT is restricted to Administrator and Curator of Pythons.
             if (prefix === 'IMPORTANT' && !canUseImportantPrefix()) {
                 alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
@@ -2355,7 +2408,9 @@
             if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...'; }
             try {
                 const allowed = ['Pending review', 'For Curator of Pythons'];
-                const prefix = isStaffUser() ? selectedPrefix : (allowed.includes(selectedPrefix) ? selectedPrefix : 'Pending review');
+                const prefix = isAssistantAdministrator()
+                    ? 'Pending review'
+                    : (isStaffUser() ? selectedPrefix : (allowed.includes(selectedPrefix) ? selectedPrefix : 'Pending review'));
                 const title = document.getElementById('thread-title').value.trim();
                 const content = document.getElementById('thread-content').value.trim();
                 const newThread = {
@@ -2410,6 +2465,7 @@
             const postsContainer = document.getElementById('posts-container');
             const isCurator = isCuratorUser();
             const isStaff = isStaffUser();
+            const isAssistant = isAssistantAdministrator();
             const canModerateUsers = canBanOrUnbanUsers();
 
             let postsHTML = thread.posts.map((p, idx) => {
@@ -2428,7 +2484,7 @@
                 }
 
                 let gmailTag = '';
-                if (isCurator && p.gmail) {
+                if (isCurator && !isAssistant && p.gmail) {
                     gmailTag = `<span class="gmail-badge"><i class="fa-solid fa-envelope"></i> ${p.gmail}</span>`;
                 }
 
@@ -2475,7 +2531,7 @@
 
             const replyContainer = document.getElementById('reply-container');
             
-            if (thread.isLocked && !isStaff) {
+            if (thread.isLocked && !isStaff && !isAssistantAdministrator()) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 10px;"><i class="fa-solid fa-lock" style="color:var(--accent-yellow);"></i> This thread is not open for further replies.</div>`;
             } else if (!currentUser) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted);">Please log in to leave a reply.</div>`;
@@ -2523,7 +2579,7 @@
 
         async function updateThreadStatus(status) {
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
-            if (!thread || !isStaffUser()) return;
+            if (!thread || !isStaffUser() || isAssistantAdministrator()) return;
             if (status === 'IMPORTANT' && !canUseImportantPrefix()) {
                 alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
                 const select = document.getElementById('admin-status-select');
@@ -2543,7 +2599,7 @@
 
         async function toggleLockThread() {
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
-            if (!thread || !isStaffUser()) return;
+            if (!thread || !canManageThreadLock()) return;
             const previousState = !!thread.isLocked;
             thread.isLocked = !previousState;
             const button = document.querySelector('#admin-controls button[onclick="toggleLockThread()"]');
