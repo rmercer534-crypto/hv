@@ -337,6 +337,8 @@
             animation: prefixYellow 1.8s ease-in-out infinite;
         }
 
+        .prefix-sorted { color:#111; background:linear-gradient(90deg,#fff200,#ffd000,#fff200,#ffe45c,#fff200); background-size:300% 100%; box-shadow:0 0 9px rgba(250,204,21,.55); animation:prefixSorted 1.8s ease-in-out infinite; font-weight:800; }
+
         .prefix-consideration {
             color: #fff;
             background: #f97316;
@@ -370,6 +372,8 @@
             0%, 100% { opacity: .88; box-shadow: 0 0 0 rgba(234,179,8,0); }
             50% { opacity: 1; box-shadow: 0 0 14px rgba(234,179,8,.85); }
         }
+
+        @keyframes prefixSorted { 0%{background-position:0% 50%;filter:brightness(1)} 50%{background-position:100% 50%;filter:brightness(1.14)} 100%{background-position:0% 50%;filter:brightness(1)} }
 
         @keyframes prefixOrange {
             0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(249,115,22,0); }
@@ -1048,6 +1052,7 @@
                                         <div class="dropdown-item" onclick="selectPrefix('Reviewing')"><span class="prefix prefix-reviewing">Reviewing</span></div>
                                         <div class="dropdown-item" onclick="selectPrefix('On consideration')"><span class="prefix prefix-consideration">On consideration</span></div>
                                     </div>
+                                    <div class="dropdown-item prefix-sorted-option" style="display:none;" onclick="selectPrefix('Sorted')"><span class="prefix prefix-sorted">Sorted</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1120,6 +1125,7 @@
                             <option value="Pending review">Pending review</option>
                             <option value="For Curator of Pythons">For Curator of Pythons</option>
                             <option value="IMPORTANT" id="admin-important-option" style="display:none;">IMPORTANT</option>
+                            <option value="Sorted" style="display:none;">Sorted</option>
                             <option value="Reviewing">Reviewing</option>
                             <option value="On consideration">On consideration</option>
                             <option value="Approved">Approved</option>
@@ -2116,8 +2122,15 @@
                 const deleteButton = adminControls.querySelector('button.btn-red[onclick="deleteActiveThread()"]');
 
                 if (statusSelect) {
-                    statusSelect.value = thread.prefix;
-                    statusSelect.style.display = isAssistant ? 'none' : '';
+                    if (isAssistant) {
+                        statusSelect.innerHTML = `<option value="Pending review">Pending review</option><option value="For Curator of Pythons">For Curator of Pythons</option><option value="Sorted">Sorted</option>`;
+                        statusSelect.value = assistantAllowedPrefix(thread.prefix) ? thread.prefix : 'Pending review';
+                    } else {
+                        const sorted = statusSelect.querySelector('option[value="Sorted"]');
+                        if (sorted) sorted.style.display = (currentUser && currentUser.role === 'Curator of Pythons') ? '' : 'none';
+                        statusSelect.value = thread.prefix;
+                    }
+                    statusSelect.style.display = '';
                 }
 
                 const lockButton = adminControls.querySelector('button[onclick="toggleLockThread()"]');
@@ -2215,6 +2228,7 @@
                 case 'Pending review': return 'prefix-pending';
                 case 'For Curator of Pythons': return 'prefix-curator';
                 case 'Reviewing': return 'prefix-reviewing';
+                case 'Sorted': return 'prefix-sorted';
                 case 'On consideration': return 'prefix-consideration';
                 case 'Approved': return 'prefix-approved';
                 case 'Rejected': return 'prefix-rejected';
@@ -2301,6 +2315,14 @@
             return !!currentUser && currentUser.role === 'Assistant Administrator';
         }
 
+        function canUseSortedPrefix() {
+            return !!currentUser && (currentUser.role === 'Assistant Administrator' || currentUser.role === 'Curator of Pythons');
+        }
+
+        function assistantAllowedPrefix(prefix) {
+            return ['Pending review', 'For Curator of Pythons', 'Sorted'].includes(prefix);
+        }
+
         function canManageThreadLock() {
             return isStaffUser() || isAssistantAdministrator();
         }
@@ -2320,79 +2342,41 @@
         }
 
         function updatePrefixMenuForRole() {
-            const staffOptions = document.getElementById('staff-prefix-options');
-            const prefixButton = document.getElementById('prefix-select-btn');
-
-            if (!staffOptions || !prefixButton) return;
-
-            const importantOption = document.getElementById('important-prefix-option');
-            const adminImportantOption = document.getElementById('admin-important-option');
-            if (importantOption) importantOption.style.display = canUseImportantPrefix() ? 'block' : 'none';
-            if (adminImportantOption) adminImportantOption.style.display = canUseImportantPrefix() ? '' : 'none';
-
-            if (isAssistantAdministrator()) {
-                selectedPrefix = 'Pending review';
-                prefixButton.style.display = 'none';
-                staffOptions.classList.add('hidden');
-                const prefixMenu = document.getElementById('prefix-menu');
-                if (prefixMenu) prefixMenu.style.display = 'none';
-                return;
-            }
-
-            prefixButton.style.display = '';
-            if (!canUseImportantPrefix() && selectedPrefix === 'IMPORTANT') {
-                selectedPrefix = 'Pending review';
-            }
-
-            if (isStaffUser()) {
-                staffOptions.classList.remove('hidden');
+            const staffOptions=document.getElementById('staff-prefix-options');
+            const prefixButton=document.getElementById('prefix-select-btn');
+            const prefixMenu=document.getElementById('prefix-menu');
+            const importantOption=document.getElementById('important-prefix-option');
+            const adminImportantOption=document.getElementById('admin-important-option');
+            const sortedOption=prefixMenu ? prefixMenu.querySelector('.prefix-sorted-option') : null;
+            if(!staffOptions||!prefixButton) return;
+            const assistant=isAssistantAdministrator();
+            if(importantOption) importantOption.style.display=(!assistant&&canUseImportantPrefix())?'block':'none';
+            if(adminImportantOption) adminImportantOption.style.display=(!assistant&&canUseImportantPrefix())?'':'none';
+            if(sortedOption) sortedOption.style.display=canUseSortedPrefix()?'':'none';
+            if(assistant){
+                prefixButton.style.display=''; staffOptions.classList.add('hidden');
+                if(prefixMenu) prefixMenu.querySelectorAll('.dropdown-item').forEach(item=>{const t=item.textContent.trim(); item.style.display=(t==='Pending review'||t==='For Curator of Pythons'||t==='Sorted')?'':'none';});
+                if(!assistantAllowedPrefix(selectedPrefix)) selectedPrefix='Pending review';
             } else {
-                // Players may choose only Pending review or For Curator of Pythons.
-                staffOptions.classList.add('hidden');
-
-                if (selectedPrefix !== 'Pending review' &&
-                    selectedPrefix !== 'For Curator of Pythons') {
-                    selectedPrefix = 'Pending review';
-                }
-
-                prefixButton.className = `prefix ${getPrefixClass(selectedPrefix)}`;
-                prefixButton.innerHTML = `${selectedPrefix} <i class="fa-solid fa-caret-down"></i>`;
+                prefixButton.style.display='';
+                if(!canUseImportantPrefix()&&selectedPrefix==='IMPORTANT') selectedPrefix='Pending review';
+                if(isStaffUser()) staffOptions.classList.remove('hidden'); else {staffOptions.classList.add('hidden'); if(!['Pending review','For Curator of Pythons'].includes(selectedPrefix)) selectedPrefix='Pending review';}
             }
+            prefixButton.className=`prefix ${getPrefixClass(selectedPrefix)}`;
+            prefixButton.innerHTML=`${selectedPrefix} <i class="fa-solid fa-caret-down"></i>`;
         }
 
         function togglePrefixMenu() {
-            if (isAssistantAdministrator()) return;
-            updatePrefixMenuForRole();
-            const menu = document.getElementById('prefix-menu');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            updatePrefixMenuForRole(); const menu=document.getElementById('prefix-menu'); if(!menu)return; menu.style.display=menu.style.display==='block'?'none':'block';
         }
 
         function selectPrefix(prefix) {
-            if (isAssistantAdministrator()) {
-                alert('Assistant Administrator does not have access to change thread prefixes.');
-                return;
-            }
-
-            // IMPORTANT is restricted to Administrator and Curator of Pythons.
-            if (prefix === 'IMPORTANT' && !canUseImportantPrefix()) {
-                alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
-                return;
-            }
-
-            // Players may select only Pending review or For Curator of Pythons.
-            const playerAllowedPrefixes = ['Pending review', 'For Curator of Pythons'];
-
-            if (!isStaffUser() && !playerAllowedPrefixes.includes(prefix)) {
-                alert('Players can only use "Pending review" or "For Curator of Pythons".');
-                return;
-            }
-
-            selectedPrefix = prefix;
-
-            const btn = document.getElementById('prefix-select-btn');
-            btn.className = `prefix ${getPrefixClass(selectedPrefix)}`;
-            btn.innerHTML = `${selectedPrefix} <i class="fa-solid fa-caret-down"></i>`;
-            document.getElementById('prefix-menu').style.display = 'none';
+            if(isAssistantAdministrator()&&!assistantAllowedPrefix(prefix)){alert('Assistant Administrator can only use Pending review, For Curator of Pythons, or Sorted.');return;}
+            if(prefix==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator and Curator of Pythons can use the Sorted prefix.');return;}
+            if(prefix==='IMPORTANT'&&!canUseImportantPrefix()){alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');return;}
+            const playerAllowedPrefixes=['Pending review','For Curator of Pythons'];
+            if(!isStaffUser()&&!isAssistantAdministrator()&&!playerAllowedPrefixes.includes(prefix)){alert('Players can only use "Pending review" or "For Curator of Pythons".');return;}
+            selectedPrefix=prefix; const btn=document.getElementById('prefix-select-btn'); if(btn){btn.className=`prefix ${getPrefixClass(selectedPrefix)}`;btn.innerHTML=`${selectedPrefix} <i class="fa-solid fa-caret-down"></i>`;} const menu=document.getElementById('prefix-menu');if(menu)menu.style.display='none';
         }
 
         async function submitThread(e) {
@@ -2578,23 +2562,13 @@
         }
 
         async function updateThreadStatus(status) {
-            const thread = threads.find(t => String(t.id) === String(activeThreadId));
-            if (!thread || !isStaffUser() || isAssistantAdministrator()) return;
-            if (status === 'IMPORTANT' && !canUseImportantPrefix()) {
-                alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');
-                const select = document.getElementById('admin-status-select');
-                if (select) select.value = thread.prefix;
-                return;
-            }
-            const previousStatus = thread.prefix;
-            thread.prefix = status;
-            const saved = await saveThreadToDB(thread);
-            if (saved) reloadWebsite(`thread-${thread.id}`);
-            else {
-                thread.prefix = previousStatus;
-                upsertLocalThread(thread);
-                refreshActiveView();
-            }
+            const thread=threads.find(t=>String(t.id)===String(activeThreadId));
+            if(!thread||(!isStaffUser()&&!isAssistantAdministrator())) return;
+            if(isAssistantAdministrator()&&!assistantAllowedPrefix(status)){alert('Assistant Administrator can only change a submitted thread to Pending review, For Curator of Pythons, or Sorted.');const select=document.getElementById('admin-status-select');if(select)select.value=assistantAllowedPrefix(thread.prefix)?thread.prefix:'Pending review';return;}
+            if(status==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator and Curator of Pythons can use the Sorted prefix.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
+            if(status==='IMPORTANT'&&!canUseImportantPrefix()){alert('Only Administrator and Curator of Pythons can select the IMPORTANT prefix.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
+            const previousStatus=thread.prefix; thread.prefix=status; const saved=await saveThreadToDB(thread);
+            if(saved) reloadWebsite(`thread-${thread.id}`); else {thread.prefix=previousStatus;upsertLocalThread(thread);refreshActiveView();}
         }
 
         async function toggleLockThread() {
