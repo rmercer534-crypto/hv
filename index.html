@@ -955,6 +955,10 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 .messaging-notification-icon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,183,3,.12); color:#ffb703; flex:0 0 auto; }
 @media (max-width:700px){ .messaging-popover{width:calc(100vw - 24px);right:-50px}.messaging-layout{grid-template-columns:1fr}.messaging-sidebar{border-right:0;border-bottom:1px solid var(--border-color)} }
 
+
+/* Account Settings / Password & Security */
+.account-settings-wrap{max-width:820px;margin:0 auto}.settings-tabs{display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:18px;flex-wrap:wrap}.settings-tab{border:0;background:transparent;color:var(--text-muted);padding:12px 15px;cursor:pointer;border-bottom:2px solid transparent;font-weight:600}.settings-tab.active{color:var(--text-main);border-bottom-color:var(--accent-yellow)}.settings-panel{display:none}.settings-panel.active{display:block}.settings-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}.settings-card h3{margin:0 0 6px}.settings-card .help{color:var(--text-muted);font-size:13px;margin-bottom:14px}.settings-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.security-status{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;background:var(--bg-hover);margin:10px 0 15px}.security-dot{width:9px;height:9px;border-radius:50%;background:#ef4444}.security-dot.on{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.6)}.mfa-secret{font-family:monospace;word-break:break-all;background:#111827;padding:10px;border-radius:7px}.verification-note{font-size:12px;color:var(--text-muted);margin-top:7px}.settings-back{margin-bottom:14px}
+
 </style>
 </head>
 <body>
@@ -1297,21 +1301,79 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 </div>
             </div>
 
-            <!-- VIEW 6: ACCOUNT DETAILS -->
+            <!-- VIEW 6: ACCOUNT SETTINGS -->
             <div id="view-account-details" class="hidden">
-                <div class="forum-card" style="padding: 20px; max-width: 500px; margin: 0 auto;">
-                    <h2 style="margin-bottom: 16px;"><i class="fa-solid fa-user-gear"></i> Account Settings</h2>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="acc-username" class="form-control" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Registered Gmail</label>
-                        <input type="text" id="acc-email" class="form-control" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Role Privilege</label>
-                        <input type="text" id="acc-role" class="form-control" readonly>
+                <div class="account-settings-wrap">
+                    <div class="settings-back"><button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back</button></div>
+                    <div class="forum-card" style="padding:20px;">
+                        <h2 style="margin:0 0 5px;"><i class="fa-solid fa-user-gear"></i> Account Settings</h2>
+                        <div style="color:var(--text-muted);font-size:13px;margin-bottom:18px;">Manage your username, email address, password and account security.</div>
+                        <div class="settings-tabs">
+                            <button class="settings-tab active" id="settings-tab-account" onclick="openSettingsTab('account')"><i class="fa-solid fa-user"></i> Account</button>
+                            <button class="settings-tab" id="settings-tab-security" onclick="openSettingsTab('security')"><i class="fa-solid fa-lock"></i> Password &amp; Security</button>
+                        </div>
+
+                        <section id="settings-panel-account" class="settings-panel active">
+                            <div class="settings-card">
+                                <h3>Username</h3>
+                                <div class="help">You can change the username shown across the forum.</div>
+                                <form onsubmit="changeAccountUsername(event)">
+                                    <div class="form-group"><label>Current username</label><input id="acc-current-username" class="form-control" readonly></div>
+                                    <div class="form-group"><label>New username</label><input id="acc-new-username" class="form-control" minlength="3" maxlength="30" required></div>
+                                    <div class="form-group"><label>Current password</label><input id="acc-username-password" type="password" class="form-control" autocomplete="current-password" required></div>
+                                    <div class="settings-actions"><button class="btn btn-yellow" type="submit">Save Username</button></div>
+                                </form>
+                            </div>
+
+                            <div class="settings-card">
+                                <h3>Email address</h3>
+                                <div class="help">Changing your email requires confirmation. A verification message will be sent to the new address before the change is completed.</div>
+                                <form onsubmit="changeAccountEmail(event)">
+                                    <div class="form-group"><label>Current email</label><input id="acc-current-email" type="email" class="form-control" readonly></div>
+                                    <div class="form-group"><label>New email</label><input id="acc-new-email" type="email" class="form-control" autocomplete="email" required></div>
+                                    <div class="form-group"><label>Current password</label><input id="acc-email-password" type="password" class="form-control" autocomplete="current-password" required></div>
+                                    <div class="settings-actions"><button class="btn btn-yellow" type="submit">Change Email</button></div>
+                                    <div class="verification-note">You must open the verification email and confirm the new address. Until confirmation, your current email remains active.</div>
+                                </form>
+                            </div>
+
+                            <div class="settings-card">
+                                <h3>Forum role</h3>
+                                <div class="help">Your role is managed by authorized forum staff.</div>
+                                <input type="text" id="acc-role" class="form-control" readonly>
+                            </div>
+                        </section>
+
+                        <section id="settings-panel-security" class="settings-panel">
+                            <div class="settings-card">
+                                <h3>Password</h3>
+                                <div class="help">To change your password, enter your current password first, then choose a new password.</div>
+                                <form onsubmit="changeAccountPassword(event)">
+                                    <div class="form-group"><label>Current password</label><input id="security-current-password" type="password" class="form-control" autocomplete="current-password" required></div>
+                                    <div class="form-group"><label>New password</label><input id="security-new-password" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
+                                    <div class="form-group"><label>Confirm new password</label><input id="security-confirm-password" type="password" class="form-control" minlength="8" autocomplete="new-password" required></div>
+                                    <div class="settings-actions"><button class="btn btn-yellow" type="submit">Change Password</button></div>
+                                </form>
+                            </div>
+
+                            <div class="settings-card">
+                                <h3>Two-factor authentication (2FA)</h3>
+                                <div class="help">Add an authenticator-app code as an additional sign-in security step.</div>
+                                <div class="security-status"><span id="mfa-status-dot" class="security-dot"></span><span id="mfa-status-text">Checking 2FA status...</span></div>
+                                <div id="mfa-enroll-area">
+                                    <button class="btn btn-yellow" type="button" onclick="startTwoFactorSetup()"><i class="fa-solid fa-shield-halved"></i> Add authenticator</button>
+                                </div>
+                                <div id="mfa-verify-area" class="hidden" style="margin-top:14px;">
+                                    <div class="form-group"><label>Authenticator code</label><input id="mfa-code" class="form-control" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></div>
+                                    <div class="settings-actions"><button class="btn btn-yellow" type="button" onclick="verifyTwoFactorSetup()">Verify &amp; Enable 2FA</button></div>
+                                    <div id="mfa-secret-box" class="verification-note"></div>
+                                </div>
+                                <div id="mfa-disable-area" class="hidden" style="margin-top:14px;">
+                                    <div class="form-group"><label>Authenticator code</label><input id="mfa-disable-code" class="form-control" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
+                                    <div class="settings-actions"><button class="btn" type="button" onclick="disableTwoFactor()">Disable 2FA</button></div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -2186,15 +2248,163 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             `).join('');
         }
 
+        function openSettingsTab(tab) {
+            document.querySelectorAll('.settings-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+            const tabBtn = document.getElementById('settings-tab-' + tab);
+            const panel = document.getElementById('settings-panel-' + tab);
+            if (tabBtn) tabBtn.classList.add('active');
+            if (panel) panel.classList.add('active');
+            if (tab === 'security') refreshTwoFactorStatus();
+        }
+
         function showAccountDetailsView() {
             hideAllViews();
             document.getElementById('view-account-details').classList.remove('hidden');
             if (currentUser) {
-                document.getElementById('acc-username').value = currentUser.username;
-                document.getElementById('acc-email').value = currentUser.gmail;
-                document.getElementById('acc-role').value = currentUser.role;
+                document.getElementById('acc-current-username').value = currentUser.username || '';
+                document.getElementById('acc-new-username').value = currentUser.username || '';
+                document.getElementById('acc-current-email').value = currentUser.gmail || '';
+                document.getElementById('acc-role').value = currentUser.role || 'Player';
+                openSettingsTab('account');
             }
         }
+
+        async function verifyCurrentPassword(password) {
+            if (!supabaseClient || !currentUser || !currentUser.gmail) throw new Error('Secure account authentication is unavailable.');
+            if (!password) throw new Error('Enter your current password.');
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email: currentUser.gmail, password });
+            if (error || !data?.user) throw new Error('The current password is incorrect.');
+            return data.user;
+        }
+
+        async function changeAccountUsername(event) {
+            event.preventDefault();
+            if (!currentUser) return;
+            const newUsername = document.getElementById('acc-new-username').value.trim();
+            const password = document.getElementById('acc-username-password').value;
+            if (!/^[A-Za-z0-9_ .-]{3,30}$/.test(newUsername)) {
+                alert('Username must be 3-30 characters and can contain letters, numbers, spaces, dots, hyphens or underscores.'); return;
+            }
+            if (newUsername.toLowerCase() === String(currentUser.username || '').toLowerCase()) { alert('That is already your username.'); return; }
+            try {
+                await verifyCurrentPassword(password);
+                const duplicate = await supabaseRequest(SUPABASE_USERS_TABLE + '?select=gmail&username=eq.' + encodeURIComponent(newUsername) + '&limit=1');
+                if (Array.isArray(duplicate) && duplicate.length) { alert('That username is already registered. Please choose another one.'); return; }
+                const oldUsername = currentUser.username;
+                const patch = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_USERS_TABLE}?gmail=eq.${encodeURIComponent(String(currentUser.gmail).toLowerCase())}`, {
+                    method:'PATCH', headers:supabaseHeaders({Prefer:'return=representation'}),
+                    body:JSON.stringify({username:newUsername,updated_at:new Date().toISOString()})
+                });
+                if (!patch.ok) throw new Error('The username could not be saved. Check the forum_users UPDATE policy.');
+                currentUser.username = newUsername;
+                registeredUsers.forEach(u => { if (String(u.gmail||'').toLowerCase() === String(currentUser.gmail||'').toLowerCase()) u.username = newUsername; });
+                try { localStorage.setItem('pf_profile_sync', JSON.stringify({email:currentUser.gmail,username:newUsername,updatedAt:Date.now()})); } catch(_) {}
+                updateAuthUI();
+                showAccountDetailsView();
+                alert('Username changed successfully from "' + oldUsername + '" to "' + newUsername + '".');
+            } catch (error) { console.error(error); alert(error.message || 'Unable to change username.'); }
+        }
+
+        async function changeAccountEmail(event) {
+            event.preventDefault();
+            if (!currentUser || !supabaseClient) return;
+            const newEmail = document.getElementById('acc-new-email').value.trim().toLowerCase();
+            const password = document.getElementById('acc-email-password').value;
+            if (!newEmail || !newEmail.includes('@')) { alert('Enter a valid email address.'); return; }
+            if (newEmail === String(currentUser.gmail || '').toLowerCase()) { alert('That is already your email address.'); return; }
+            try {
+                await verifyCurrentPassword(password);
+                const duplicate = await supabaseRequest(SUPABASE_USERS_TABLE + '?select=gmail&gmail=eq.' + encodeURIComponent(newEmail) + '&limit=1');
+                if (Array.isArray(duplicate) && duplicate.length) { alert('That email address is already registered.'); return; }
+                const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+                if (error) throw error;
+                try { localStorage.setItem('pf_pending_email_change', JSON.stringify({ oldEmail: currentUser.gmail, newEmail, createdAt: Date.now() })); } catch (_) {}
+                alert('Verification email sent to ' + newEmail + '. Open that email and confirm the new address. Your current email remains active until confirmation.');
+                document.getElementById('acc-new-email').value = '';
+                document.getElementById('acc-email-password').value = '';
+            } catch (error) { console.error(error); alert(error.message || 'Unable to start the email change.'); }
+        }
+
+        async function changeAccountPassword(event) {
+            event.preventDefault();
+            if (!currentUser || !supabaseClient) return;
+            const currentPassword = document.getElementById('security-current-password').value;
+            const newPassword = document.getElementById('security-new-password').value;
+            const confirmPassword = document.getElementById('security-confirm-password').value;
+            if (newPassword.length < 8) { alert('New password must be at least 8 characters.'); return; }
+            if (newPassword !== confirmPassword) { alert('The new passwords do not match.'); return; }
+            try {
+                await verifyCurrentPassword(currentPassword);
+                const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+                if (error) throw error;
+                document.getElementById('security-current-password').value='';
+                document.getElementById('security-new-password').value='';
+                document.getElementById('security-confirm-password').value='';
+                alert('Password changed successfully.');
+            } catch (error) { console.error(error); alert(error.message || 'Unable to change password.'); }
+        }
+
+        async function refreshTwoFactorStatus() {
+            const dot=document.getElementById('mfa-status-dot'), text=document.getElementById('mfa-status-text');
+            const enroll=document.getElementById('mfa-enroll-area'), disable=document.getElementById('mfa-disable-area');
+            if (!supabaseClient || !supabaseClient.auth.mfa) { if(text)text.textContent='2FA is unavailable in this authentication configuration.'; return; }
+            try {
+                const {data,error}=await supabaseClient.auth.mfa.listFactors();
+                if(error) throw error;
+                const verified=(data?.totp||[]).some(f=>f.status==='verified');
+                if(dot)dot.classList.toggle('on',verified);
+                if(text)text.textContent=verified?'2FA is enabled for this account.':'2FA is not enabled.';
+                if(enroll)enroll.classList.toggle('hidden',verified);
+                if(disable)disable.classList.toggle('hidden',!verified);
+            } catch(error) { console.warn('MFA status unavailable:',error); if(text)text.textContent='Unable to check 2FA status.'; }
+        }
+
+        let pendingMfaFactorId = null;
+        async function startTwoFactorSetup() {
+            if(!supabaseClient?.auth?.mfa){alert('2FA is not available.');return;}
+            try {
+                const {data,error}=await supabaseClient.auth.mfa.enroll({factorType:'totp',friendlyName:'Pythons Family Authenticator'});
+                if(error) throw error;
+                pendingMfaFactorId=data.id;
+                const area=document.getElementById('mfa-verify-area'); if(area)area.classList.remove('hidden');
+                const secret=document.getElementById('mfa-secret-box');
+                if(secret)secret.innerHTML='Scan the QR code from your authenticator app using the QR data below, or enter the secret manually:<div class="mfa-secret">'+escapeBannedText(data.totp?.secret || 'Use the QR code supplied by your Supabase MFA configuration.')+'</div>';
+                alert('Add this authenticator factor to your authenticator app, then enter the 6-digit code to verify it.');
+            } catch(error){console.error(error);alert(error.message||'Unable to start 2FA setup.');}
+        }
+
+        async function verifyTwoFactorSetup() {
+            if(!pendingMfaFactorId)return;
+            const code=document.getElementById('mfa-code').value.trim();
+            if(!/^\d{6}$/.test(code)){alert('Enter the 6-digit authenticator code.');return;}
+            try {
+                const {data:challenge,error:challengeError}=await supabaseClient.auth.mfa.challenge({factorId:pendingMfaFactorId});
+                if(challengeError)throw challengeError;
+                const {error}=await supabaseClient.auth.mfa.verify({factorId:pendingMfaFactorId,challengeId:challenge.id,code});
+                if(error)throw error;
+                pendingMfaFactorId=null; document.getElementById('mfa-code').value=''; document.getElementById('mfa-verify-area').classList.add('hidden');
+                await refreshTwoFactorStatus(); alert('Two-factor authentication is now enabled.');
+            } catch(error){console.error(error);alert(error.message||'The authenticator code could not be verified.');}
+        }
+
+        async function disableTwoFactor() {
+            const code=document.getElementById('mfa-disable-code').value.trim();
+            if(!/^\d{6}$/.test(code)){alert('Enter the current 6-digit authenticator code.');return;}
+            try {
+                const {data}=await supabaseClient.auth.mfa.listFactors();
+                const factor=(data?.totp||[]).find(f=>f.status==='verified');
+                if(!factor) { await refreshTwoFactorStatus(); return; }
+                const {data:challenge,error:challengeError}=await supabaseClient.auth.mfa.challenge({factorId:factor.id});
+                if(challengeError)throw challengeError;
+                const {error:verifyError}=await supabaseClient.auth.mfa.verify({factorId:factor.id,challengeId:challenge.id,code});
+                if(verifyError)throw verifyError;
+                const {error}=await supabaseClient.auth.mfa.unenroll({factorId:factor.id});
+                if(error)throw error;
+                document.getElementById('mfa-disable-code').value=''; await refreshTwoFactorStatus(); alert('2FA has been disabled.');
+            } catch(error){console.error(error);alert(error.message||'Unable to disable 2FA.');}
+        }
+
 
         function showThreadDetailView(id) {
             hideAllViews();
@@ -3318,7 +3528,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         }, 5000);
 
         if (supabaseClient) {
-            supabaseClient.auth.onAuthStateChange((event, session) => {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     updateAuthUI();
@@ -3331,6 +3541,28 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                         updateAuthUI();
                         updatePrefixMenuForRole();
                     });
+                } else if (session && session.user && currentUser && event === 'USER_UPDATED') {
+                    const oldEmail = String(currentUser.gmail || '').trim().toLowerCase();
+                    const updated = makeForumUserFromAuth(session.user, currentUser);
+                    currentUser = Object.assign(currentUser, updated);
+                    try {
+                        const pending = JSON.parse(localStorage.getItem('pf_pending_email_change') || 'null');
+                        if (pending && pending.newEmail && String(session.user.email || '').toLowerCase() === String(pending.newEmail).toLowerCase()) {
+                            const oldE = String(pending.oldEmail || oldEmail).toLowerCase();
+                            const newE = String(session.user.email || '').toLowerCase();
+                            if (sharedForumConfigured() && oldE && newE && oldE !== newE) {
+                                await supabaseRequest(SUPABASE_USERS_TABLE + '?gmail=eq.' + encodeURIComponent(oldE), {
+                                    method:'PATCH', headers:supabaseHeaders({Prefer:'return=minimal'}),
+                                    body:JSON.stringify({gmail:newE,updated_at:new Date().toISOString()})
+                                });
+                            }
+                            localStorage.removeItem('pf_pending_email_change');
+                        }
+                    } catch (_) {}
+                    await hydrateUserFromSharedProfile(currentUser);
+                    saveUserToDB(currentUser);
+                    updateAuthUI();
+                    if (location.hash === '#account-details') showAccountDetailsView();
                 }
             });
         }
