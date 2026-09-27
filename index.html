@@ -897,6 +897,64 @@
     font-size: 12px;
 }
 
+
+/* Private-email restriction for Curator of Administrator */
+body.curator-admin-no-emails .gmail-badge { display:none !important; }
+body.curator-admin-no-emails .curator-email-private { display:none !important; }
+
+/* Gmail-like conversations and notification controls */
+.messaging-nav { position:relative; display:flex; align-items:center; gap:7px; margin-right:4px; }
+.messaging-icon-btn { position:relative; width:36px; height:36px; border:0; border-radius:9px; background:transparent; color:#c7cbd3; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.messaging-icon-btn:hover { background:#2f3136; color:#fff; }
+.messaging-count { position:absolute; top:-2px; right:-1px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; line-height:17px; text-align:center; border:2px solid #1e1f22; }
+.messaging-popover { position:absolute; top:45px; right:0; width:360px; background:#202225; border:1px solid #3a3d43; border-radius:10px; box-shadow:0 16px 40px rgba(0,0,0,.45); overflow:hidden; z-index:5000; }
+.messaging-popover-header { padding:14px 15px; font-size:16px; font-weight:700; background:#1e1f22; }
+.messaging-popover-body { max-height:380px; overflow:auto; }
+.messaging-popover-empty { padding:18px 15px; color:#a7adb7; font-size:13px; }
+.messaging-popover-link { display:flex; justify-content:space-between; align-items:center; padding:11px 15px; color:#cfd3da; cursor:pointer; border-top:1px solid rgba(255,255,255,.04); }
+.messaging-popover-link:hover { background:#2f3136; }
+.messaging-popover-footer { padding:9px 12px; border-top:1px solid #35383e; color:#aeb4bf; font-size:12px; }
+.messaging-row { display:flex; align-items:center; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border-color); cursor:pointer; }
+.messaging-row:hover { background:var(--bg-hover); }
+.messaging-avatar { width:34px; height:34px; border-radius:50%; background:#d7b15e; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex:0 0 auto; }
+.messaging-row-main { min-width:0; flex:1; }
+.messaging-row-name { font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.messaging-row-preview { color:var(--text-muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+.messaging-row-time { color:var(--text-muted); font-size:11px; }
+.messaging-unread { min-width:20px; height:20px; border-radius:999px; background:#ef4444; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; }
+.messaging-layout { display:grid; grid-template-columns:280px minmax(0,1fr); min-height:620px; }
+.messaging-sidebar { border-right:1px solid var(--border-color); background:rgba(0,0,0,.08); }
+.messaging-main { display:flex; flex-direction:column; min-width:0; }
+.messaging-main-header { padding:15px 18px; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.messaging-main-title { font-weight:700; font-size:16px; }
+.messaging-compose { padding:18px; }
+.messaging-recipient-box { border:1px solid var(--border-color); border-radius:8px; padding:10px; background:#1e1f22; }
+.messaging-recipient-search { width:100%; border:0; outline:none; background:transparent; color:var(--text-main); padding:4px; }
+.messaging-recipient-list { max-height:280px; overflow:auto; margin-top:8px; }
+.messaging-recipient { display:flex; align-items:center; gap:10px; padding:9px; border-radius:7px; cursor:pointer; }
+.messaging-recipient:hover,.messaging-recipient.selected { background:#2f3136; }
+.messaging-recipient-check { width:18px; color:#8b5cf6; text-align:center; }
+.messaging-recipient-name { font-weight:600; }
+.messaging-recipient-role { font-size:11px; color:var(--text-muted); }
+.messaging-title-input { width:100%; margin-top:12px; }
+.messaging-editor { width:100%; min-height:230px; margin-top:12px; resize:vertical; }
+.messaging-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:12px; }
+.messaging-chat { flex:1; padding:18px; overflow:auto; min-height:470px; }
+.messaging-bubble-row { display:flex; margin-bottom:12px; }
+.messaging-bubble-row.mine { justify-content:flex-end; }
+.messaging-bubble { max-width:min(75%,620px); padding:10px 13px; border-radius:12px; background:#2f3136; }
+.messaging-bubble-row.mine .messaging-bubble { background:#3a3f48; }
+.messaging-bubble-author { font-size:11px; color:#aeb4bf; margin-bottom:4px; }
+.messaging-bubble-text { white-space:pre-wrap; word-break:break-word; }
+.messaging-bubble-time { font-size:10px; color:#8f95a0; margin-top:5px; text-align:right; }
+.messaging-reply-bar { border-top:1px solid var(--border-color); padding:12px; display:flex; gap:8px; }
+.messaging-reply-input { flex:1; min-height:48px; resize:none; }
+.messaging-thread-link { cursor:pointer; color:#e5e7eb; }
+.messaging-notification { display:flex; align-items:flex-start; gap:10px; padding:11px 13px; border-bottom:1px solid var(--border-color); cursor:pointer; }
+.messaging-notification:hover { background:var(--bg-hover); }
+.messaging-notification-icon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:rgba(255,183,3,.12); color:#ffb703; flex:0 0 auto; }
+@media (max-width:700px){ .messaging-popover{width:calc(100vw - 24px);right:-50px}.messaging-layout{grid-template-columns:1fr}.messaging-sidebar{border-right:0;border-bottom:1px solid var(--border-color)} }
+
 </style>
 </head>
 <body>
@@ -929,6 +987,12 @@
                 <button class="btn btn-yellow" onclick="openModal('register-modal')">Register</button>
             </div>
             <div id="user-nav" class="hidden profile-menu-container">
+                <div class="messaging-nav" id="messaging-nav">
+                    <button class="messaging-icon-btn" title="Conversations" onclick="toggleConversationPopover(event)"><i class="fa-regular fa-envelope"></i><span id="conversation-unread-count" class="messaging-count" style="display:none;">0</span></button>
+                    <button class="messaging-icon-btn" title="Notifications" onclick="toggleNotificationPopover(event)"><i class="fa-regular fa-bell"></i><span id="notification-unread-count" class="messaging-count" style="display:none;">0</span></button>
+                    <div id="conversation-popover" class="messaging-popover" style="display:none;"></div>
+                    <div id="notification-popover" class="messaging-popover" style="display:none;"></div>
+                </div>
                 <div class="user-avatar-btn" onclick="toggleProfileDropdown()">
                     <div class="avatar" id="nav-avatar">D</div>
                     <span id="user-display-name" style="font-size: 14px; font-weight: 500;">dfsa</span>
@@ -1142,6 +1206,42 @@
 
                 <!-- Reply Form -->
                 <div id="reply-container" class="forum-card" style="padding: 16px;"></div>
+            </div>
+
+            <!-- VIEW: CONVERSATIONS -->
+            <div id="view-conversations" class="hidden">
+                <div class="breadcrumb">
+                    <a onclick="navigateTo('forum-list')">Home</a>
+                    <span>&gt;</span>
+                    <span style="color:var(--text-main);">Conversations</span>
+                </div>
+                <div class="forum-card" style="padding:0; overflow:hidden;">
+                    <div class="messaging-layout">
+                        <aside class="messaging-sidebar">
+                            <div class="messaging-main-header">
+                                <span class="messaging-main-title">Conversations</span>
+                                <button class="btn btn-yellow" onclick="openNewConversationComposer()"><i class="fa-solid fa-pen"></i> New</button>
+                            </div>
+                            <div id="conversation-list"></div>
+                        </aside>
+                        <section class="messaging-main">
+                            <div id="conversation-main-content">
+                                <div class="messaging-compose">
+                                    <h2 style="margin-top:0;">Start conversation</h2>
+                                    <div class="messaging-recipient-box">
+                                        <label style="display:block;margin-bottom:5px;">Recipients:</label>
+                                        <input id="conversation-recipient-search" class="messaging-recipient-search" placeholder="Search registered users..." oninput="renderConversationRecipients(this.value)">
+                                        <div id="conversation-recipient-list" class="messaging-recipient-list"></div>
+                                        <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Double-click a person to select them and start the conversation.</div>
+                                    </div>
+                                    <input id="conversation-title" class="form-control messaging-title-input" placeholder="Title...">
+                                    <textarea id="conversation-body" class="form-control messaging-editor" placeholder="Write your message..."></textarea>
+                                    <div class="messaging-actions"><button class="btn btn-yellow" onclick="startConversation()"><i class="fa-regular fa-comments"></i> START CONVERSATION</button></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
             </div>
 
             <!-- VIEW: CURATOR PANEL (CURATOR OF PYTHONS ONLY) -->
@@ -1579,6 +1679,8 @@
                 renderThreads();
             } else if (hash === 'archive-folder') {
                 renderArchivedThreads();
+            } else if (hash === 'conversations') {
+                renderConversations();
             } else if (hash === 'admin-panel') {
                 if (canAccessAdminPanel()) renderAdminPanel(); else navigateTo('forum-list');
             } else if (hash === 'curator-panel') {
@@ -1615,6 +1717,8 @@
                 showArchiveView();
             } else if (hash === 'create-thread') {
                 showCreateThreadView();
+            } else if (hash === 'conversations') {
+                showConversationsView();
             } else if (hash === 'admin-panel') {
                 showAdminPanelView();
             } else if (hash === 'curator-panel') {
@@ -1802,7 +1906,7 @@
         }
 
         function hideAllViews() {
-            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-curator-panel', 'view-admin-panel', 'view-account-details'];
+            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-conversations', 'view-curator-panel', 'view-admin-panel', 'view-account-details'];
             views.forEach(v => {
                 const el = document.getElementById(v);
                 if (el) el.classList.add('hidden');
@@ -2137,7 +2241,7 @@
                 if (lockButton) lockButton.style.display = '';
 
                 if (archiveButton) {
-                    archiveButton.style.display = isAssistant ? 'none' : '';
+                    archiveButton.style.display = '';
                     archiveButton.innerHTML = thread.isArchived ?
                         '<i class="fa-solid fa-box-open"></i> Restore from Archive' :
                         '<i class="fa-solid fa-box-archive"></i> Move to Archive';
@@ -2623,7 +2727,7 @@
 
         async function toggleArchiveThread() {
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
-            if (!thread || !isStaffUser()) return;
+            if (!thread || (!isStaffUser() && !isAssistantAdministrator())) return;
             const nextArchived = !thread.isArchived;
             thread.isArchived = nextArchived;
             const saved = await saveThreadToDB(thread);
@@ -2974,28 +3078,33 @@
         }
 
         async function saveSharedUserProfile(user) {
-            if (!user || !user.gmail || !sharedForumConfigured()) return;
+            if (!user || !user.gmail || !sharedForumConfigured()) return false;
+            const email = String(user.gmail).trim().toLowerCase();
+            const payload = {
+                gmail: email,
+                username: String(user.username || '').trim(),
+                discord: String(user.discord || '').trim(),
+                role: String(user.role || 'Player'),
+                updated_at: new Date().toISOString()
+            };
             try {
-                await supabaseRequest(SUPABASE_USERS_TABLE + '?on_conflict=gmail', {
-                    method: 'POST',
-                    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-                    body: JSON.stringify({
-                        gmail: String(user.gmail).trim().toLowerCase(),
-                        username: String(user.username || '').trim(),
-                        discord: String(user.discord || '').trim(),
-                        role: String(user.role || 'Player'),
-                        updated_at: new Date().toISOString()
-                    })
-                });
-
-                // Verify the role was actually persisted. This prevents the Curator
-                // Panel from reporting success when Supabase RLS/table settings
-                // silently prevented the account profile from being updated.
-                const verify = await supabaseRequest(
-                    SUPABASE_USERS_TABLE + '?select=gmail,role&gmail=eq.' + encodeURIComponent(String(user.gmail).trim().toLowerCase()) + '&limit=1'
-                );
+                let updated = false;
+                try {
+                    const patch = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_USERS_TABLE}?gmail=eq.${encodeURIComponent(email)}`, {
+                        method: 'PATCH', headers: supabaseHeaders({Prefer:'return=representation'}), body: JSON.stringify(payload)
+                    });
+                    updated = patch.ok;
+                } catch (_) {}
+                if (!updated) {
+                    await supabaseRequest(SUPABASE_USERS_TABLE + '?on_conflict=gmail', {
+                        method: 'POST',
+                        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+                const verify = await supabaseRequest(SUPABASE_USERS_TABLE + '?select=gmail,username,role&gmail=eq.' + encodeURIComponent(email) + '&limit=1');
                 if (!Array.isArray(verify) || !verify[0] || String(verify[0].role || '') !== String(user.role || 'Player')) {
-                    throw new Error('The shared user profile did not save the new role. Check the forum_users table RLS policies.');
+                    throw new Error('The shared user profile did not save the new role. Check forum_users UPDATE/INSERT RLS policies.');
                 }
                 return true;
             } catch (profileError) {
@@ -3179,11 +3288,13 @@
                 const roleBadge = document.getElementById('dropdown-role');
                 roleBadge.innerText = currentUser.role;
                 roleBadge.className = `role-badge ${getRoleClass(currentUser.role)}`;
+                document.body.classList.toggle('curator-admin-no-emails', currentUser.role === 'Curator of Administrator');
                 const adminPanelItem = document.getElementById('admin-panel-menu-item');
                 if (adminPanelItem) adminPanelItem.style.display = canAccessAdminPanel() ? 'flex' : 'none';
                 const curatorPanelItem = document.getElementById('curator-panel-menu-item');
                 if (curatorPanelItem) curatorPanelItem.style.display = canAccessCuratorPanel() ? 'flex' : 'none';
             } else {
+                document.body.classList.remove('curator-admin-no-emails');
                 const adminPanelItem = document.getElementById('admin-panel-menu-item');
                 if (adminPanelItem) adminPanelItem.style.display = 'none';
                 const curatorPanelItem = document.getElementById('curator-panel-menu-item');
@@ -3224,5 +3335,230 @@
             });
         }
     </script>
+<script>
+(function(){
+  window.PF_ALLOWED_ROLES=['Player','Administrator','Senior Administrator','Assistant Administrator','Curator of Chilling','Curator of Pythons','Curator of Administrator'];
+  window.PF_NORMALIZE_ROLE=function(r){return PF_ALLOWED_ROLES.includes(r)?r:'Player';};
+  window.addEventListener('storage',function(e){
+    if(e.key!=='pf_role_sync'||!e.newValue)return;
+    try{const d=JSON.parse(e.newValue);if(window.currentUser&&String(currentUser.id)===String(d.userId)){currentUser.role=PF_NORMALIZE_ROLE(d.role);if(typeof updateUI==='function')updateUI();if(typeof updateStaffControls==='function')updateStaffControls();}}catch(_){}
+  });
+})();
+</script>
+
+<script>
+/* ==========================================================
+   GMAIL-LIKE CONVERSATIONS + FORUM REPLY NOTIFICATIONS
+   Uses Supabase forum_conversations when available, with a
+   localStorage fallback so the UI still works offline.
+   ========================================================== */
+const CONVERSATIONS_TABLE = 'forum_conversations';
+const LOCAL_CONVERSATIONS_KEY = 'pythons_family_conversations_v1';
+let pfConversations = [];
+let pfConversationUsers = [];
+let pfActiveConversationId = null;
+let pfSelectedRecipient = null;
+
+function pfMeEmail(){ return String(currentUser?.gmail || '').trim().toLowerCase(); }
+function pfUserKey(u){ return String(u?.gmail || u?.username || '').trim().toLowerCase(); }
+function pfEscape(v){ return escapeBannedText(String(v ?? '')); }
+function pfNow(){ return new Date().toISOString(); }
+function pfConversationParticipants(c){ return Array.isArray(c.participants) ? c.participants : []; }
+function pfOtherParticipant(c){
+    const me=pfMeEmail();
+    return pfConversationParticipants(c).find(x=>String(x).toLowerCase()!==me) || '';
+}
+function pfUserByEmail(email){
+    const e=String(email||'').toLowerCase();
+    return pfConversationUsers.find(u=>String(u.gmail||'').toLowerCase()===e) || {gmail:e,username:e.split('@')[0],role:'Player'};
+}
+function pfConversationUnread(c){
+    const me=pfMeEmail();
+    return (c.messages||[]).filter(m=>String(m.to||'').toLowerCase()===me && !m.read).length;
+}
+function pfTotalUnread(){ return pfConversations.reduce((n,c)=>n+pfConversationUnread(c),0); }
+function pfThreadReplyNotifications(){
+    if(!currentUser) return [];
+    const me=pfMeEmail();
+    return (Array.isArray(threads)?threads:[]).map(t=>{
+        const mine=String(t.authorGmail||'').toLowerCase()===me || String(t.author||'').toLowerCase()===String(currentUser.username||'').toLowerCase();
+        if(!mine) return null;
+        const replies=(t.posts||[]).slice(1).filter(p=>['Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling','Assistant Administrator'].includes(String(p.role||'')));
+        if(!replies.length) return null;
+        const seenKey='pf_seen_thread_'+t.id;
+        const seen=Number(localStorage.getItem(seenKey)||0);
+        const count=Math.max(0,replies.length-seen);
+        return {thread:t,replies,count};
+    }).filter(Boolean);
+}
+function pfNotificationCount(){ return pfThreadReplyNotifications().reduce((n,x)=>n+x.count,0); }
+
+function loadLocalConversations(){
+    try{ pfConversations=JSON.parse(localStorage.getItem(LOCAL_CONVERSATIONS_KEY)||'[]'); }catch(_){pfConversations=[];}
+    if(!Array.isArray(pfConversations)) pfConversations=[];
+}
+function saveLocalConversations(){ localStorage.setItem(LOCAL_CONVERSATIONS_KEY,JSON.stringify(pfConversations)); }
+async function pfAuthedSupabaseRequest(path, options={}){
+    if(!supabaseClient) throw new Error('Supabase Auth is not available.');
+    const sessionResult=await supabaseClient.auth.getSession();
+    const token=sessionResult?.data?.session?.access_token;
+    if(!token) throw new Error('No authenticated Supabase session.');
+    const response=await fetch(SUPABASE_URL+'/rest/v1/'+path,{...options,headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json',...(options.headers||{})}});
+    if(!response.ok){throw new Error('Shared conversation database error '+response.status+': '+await response.text());}
+    if(response.status===204)return null;
+    const text=await response.text(); return text?JSON.parse(text):null;
+}
+async function loadSharedConversations(){
+    loadLocalConversations();
+    if(!sharedForumConfigured() || !currentUser) { renderConversationBadges(); return; }
+    try{
+        const email=encodeURIComponent(pfMeEmail());
+        const rows=await pfAuthedSupabaseRequest(`${CONVERSATIONS_TABLE}?select=id,participants,title,messages,created_at,updated_at&participants=cs.{${email}}&order=updated_at.desc`);
+        if(Array.isArray(rows)) pfConversations=rows.map(r=>({id:r.id,participants:r.participants||[],title:r.title||'',messages:r.messages||[],created_at:r.created_at,updated_at:r.updated_at}));
+    }catch(e){ console.warn('Shared conversations table unavailable; using local conversations.',e); }
+    renderConversationBadges();
+    if(window.location.hash==='#conversations') renderConversations();
+}
+async function saveConversation(c){
+    const normalized={...c,updated_at:pfNow()};
+    const localIndex=pfConversations.findIndex(x=>String(x.id)===String(normalized.id));
+    if(localIndex>=0) pfConversations[localIndex]=normalized; else pfConversations.unshift(normalized);
+    saveLocalConversations();
+    if(!sharedForumConfigured()) return true;
+    try{
+        const payload={id:String(normalized.id),participants:normalized.participants,title:normalized.title,messages:normalized.messages,created_at:normalized.created_at,updated_at:normalized.updated_at};
+        await pfAuthedSupabaseRequest(CONVERSATIONS_TABLE+'?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+        return true;
+    }catch(e){ console.warn('Conversation shared save unavailable:',e); return true; }
+}
+async function loadConversationUsers(){
+    const map=new Map();
+    (Array.isArray(registeredUsers)?registeredUsers:[]).forEach(u=>{if(u.gmail && String(u.gmail).toLowerCase()!==pfMeEmail()) map.set(pfUserKey(u),{gmail:String(u.gmail).toLowerCase(),username:u.username||u.gmail,role:u.role||'Player'});});
+    if(sharedForumConfigured()){
+        try{
+            const recipientFields = currentUser?.role === 'Curator of Administrator' ? 'username,role' : 'gmail,username,role';
+            const rows=await supabaseRequest(`${SUPABASE_USERS_TABLE}?select=${recipientFields}&limit=1000`);
+            (rows||[]).forEach(u=>{
+                if(currentUser?.role === 'Curator of Administrator') {
+                    if(u.username && String(u.username).toLowerCase() !== String(currentUser.username||'').toLowerCase()) map.set(String(u.username).toLowerCase(),{gmail:'',username:u.username,role:u.role||'Player'});
+                } else if(u.gmail && String(u.gmail).toLowerCase()!==pfMeEmail()) {
+                    map.set(pfUserKey(u),{gmail:String(u.gmail).toLowerCase(),username:u.username||u.gmail,role:u.role||'Player'});
+                }
+            });
+        }catch(e){ console.warn('Could not load shared conversation recipients.',e); }
+    }
+    pfConversationUsers=Array.from(map.values()).sort((a,b)=>String(a.username).localeCompare(String(b.username)));
+}
+function renderConversationBadges(){
+    const a=document.getElementById('conversation-unread-count'),b=document.getElementById('notification-unread-count');
+    const cu=pfTotalUnread(),nu=pfNotificationCount();
+    if(a){a.textContent=cu>99?'99+':cu;a.style.display=cu?'inline-flex':'none';}
+    if(b){b.textContent=nu>99?'99+':nu;b.style.display=nu?'inline-flex':'none';}
+}
+function closeMessagingPopovers(){ ['conversation-popover','notification-popover'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';}); }
+function toggleConversationPopover(e){
+    if(e)e.stopPropagation(); if(!currentUser){openModal('login-modal');return;}
+    const el=document.getElementById('conversation-popover'); const other=document.getElementById('notification-popover'); if(other)other.style.display='none';
+    if(!el)return; el.style.display=el.style.display==='block'?'none':'block'; if(el.style.display==='block') renderConversationPopover();
+}
+function toggleNotificationPopover(e){
+    if(e)e.stopPropagation(); if(!currentUser){openModal('login-modal');return;}
+    const el=document.getElementById('notification-popover'); const other=document.getElementById('conversation-popover'); if(other)other.style.display='none';
+    if(!el)return; el.style.display=el.style.display==='block'?'none':'block'; if(el.style.display==='block') renderNotificationPopover();
+}
+function renderConversationPopover(){
+    const el=document.getElementById('conversation-popover'); if(!el)return;
+    const recent=[...pfConversations].sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||''))).slice(0,5);
+    el.innerHTML=`<div class="messaging-popover-header">Conversations</div><div class="messaging-popover-body">${recent.length?recent.map(c=>{const other=pfUserByEmail(pfOtherParticipant(c));const unread=pfConversationUnread(c);const last=(c.messages||[]).at(-1);return `<div class="messaging-row" ondblclick="openConversation('${pfEscape(c.id)}')" onclick="openConversation('${pfEscape(c.id)}')"><div class="messaging-avatar">${pfEscape((other.username||'?').charAt(0).toUpperCase())}</div><div class="messaging-row-main"><div class="messaging-row-name">${pfEscape(other.username)}</div><div class="messaging-row-preview">${pfEscape(last?.body||c.title||'No messages')}</div></div>${unread?`<span class="messaging-unread">${unread}</span>`:''}</div>`}).join(''):`<div class="messaging-popover-empty">You have no recent conversations.</div>`}</div><div class="messaging-popover-footer"><span style="cursor:pointer;" onclick="navigateTo('conversations');closeMessagingPopovers();">Show all</span> · <span style="cursor:pointer;" onclick="navigateTo('conversations');setTimeout(openNewConversationComposer,30);closeMessagingPopovers();">Start a new conversation</span></div>`;
+}
+function renderNotificationPopover(){
+    const el=document.getElementById('notification-popover'); if(!el)return;
+    const notes=pfThreadReplyNotifications();
+    el.innerHTML=`<div class="messaging-popover-header">Notifications</div><div class="messaging-popover-body">${notes.length?notes.map(n=>`<div class="messaging-notification" onclick="openThreadNotification(${Number(n.thread.id)})"><div class="messaging-notification-icon"><i class="fa-solid fa-reply"></i></div><div><strong>${n.count||n.replies.length} new ${n.replies.length===1?'reply':'replies'}</strong><div style="font-size:12px;color:var(--text-muted);margin-top:3px;">${pfEscape(n.thread.title)} · <span class="prefix ${getPrefixClass(n.thread.prefix)}">${pfEscape(n.thread.prefix)}</span></div></div></div>`).join(''):`<div class="messaging-popover-empty">No new forum notifications.</div>`}</div><div class="messaging-popover-footer" onclick="navigateTo('forum-list');closeMessagingPopovers();">Forum notifications update when staff reply to your threads.</div>`;
+}
+function openThreadNotification(id){
+    const n=pfThreadReplyNotifications().find(x=>String(x.thread.id)===String(id)); if(n){localStorage.setItem('pf_seen_thread_'+id,String(n.replies.length));}
+    closeMessagingPopovers(); renderConversationBadges(); navigateTo('thread-detail',id);
+}
+function renderConversationRecipients(filter=''){
+    const list=document.getElementById('conversation-recipient-list'); if(!list)return;
+    const q=String(filter||'').toLowerCase();
+    const users=pfConversationUsers.filter(u=>String(u.username).toLowerCase().includes(q));
+    list.innerHTML=users.length?users.map(u=>`<div class="messaging-recipient ${pfSelectedRecipient?.gmail===u.gmail?'selected':''}" onclick="selectConversationRecipient('${pfEscape(u.gmail)}')" ondblclick="selectConversationRecipient('${pfEscape(u.gmail)}');startConversation()"><div class="messaging-recipient-check">${pfSelectedRecipient?.gmail===u.gmail?'✓':'○'}</div><div><div class="messaging-recipient-name">${pfEscape(u.username)}</div><div class="messaging-recipient-role">${pfEscape(u.role)}</div></div></div>`).join(''):'<div class="messaging-popover-empty">No registered users found.</div>';
+}
+function selectConversationRecipient(email){ pfSelectedRecipient=pfUserByEmail(email); renderConversationRecipients(document.getElementById('conversation-recipient-search')?.value||''); }
+async function openNewConversationComposer(){
+    navigateTo('conversations');
+    setTimeout(async()=>{pfActiveConversationId=null;pfSelectedRecipient=null;await loadConversationUsers();renderConversationRecipients('');const title=document.getElementById('conversation-title');const body=document.getElementById('conversation-body');if(title)title.value='';if(body)body.value='';},50);
+}
+async function startConversation(){
+    if(!currentUser){openModal('login-modal');return;}
+    if(!pfSelectedRecipient){alert('Please choose a registered person first. Double-click a person to select them.');return;}
+    if(!pfSelectedRecipient.gmail){alert('This account can view usernames but does not have permission to access email details for messaging.');return;}
+    const body=document.getElementById('conversation-body')?.value.trim()||''; const title=document.getElementById('conversation-title')?.value.trim()||'';
+    if(!title||!body){alert('Please enter a title and message.');return;}
+    const id='c_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const c={id,participants:[pfMeEmail(),pfSelectedRecipient.gmail],title,messages:[{id:'m_'+Date.now(),from:pfMeEmail(),to:pfSelectedRecipient.gmail,body,created_at:pfNow(),read:true}],created_at:pfNow(),updated_at:pfNow()};
+    await saveConversation(c); pfActiveConversationId=id; navigateTo('conversations'); setTimeout(()=>renderConversations(),60);
+}
+function openConversation(id){
+    closeMessagingPopovers(); pfActiveConversationId=String(id); navigateTo('conversations'); setTimeout(()=>renderConversations(),30);
+}
+function markConversationRead(c){ const me=pfMeEmail();(c.messages||[]).forEach(m=>{if(String(m.to||'').toLowerCase()===me)m.read=true;});saveConversation(c); }
+function renderConversations(){
+    if(!currentUser)return;
+    const list=document.getElementById('conversation-list'); const main=document.getElementById('conversation-main-content'); if(!list||!main)return;
+    const sorted=[...pfConversations].sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+    list.innerHTML=sorted.length?sorted.map(c=>{const other=pfUserByEmail(pfOtherParticipant(c));const unread=pfConversationUnread(c);const last=(c.messages||[]).at(-1);return `<div class="messaging-row" onclick="openConversation('${pfEscape(c.id)}')"><div class="messaging-avatar">${pfEscape((other.username||'?').charAt(0).toUpperCase())}</div><div class="messaging-row-main"><div class="messaging-row-name">${pfEscape(other.username)}</div><div class="messaging-row-preview">${pfEscape(last?.body||c.title)}</div></div>${unread?`<span class="messaging-unread">${unread}</span>`:''}</div>`}).join(''):'<div class="messaging-popover-empty">You have no recent conversations.</div>';
+    if(!pfActiveConversationId){
+        main.innerHTML=`<div class="messaging-compose"><h2 style="margin-top:0;">Start conversation</h2><div class="messaging-recipient-box"><label style="display:block;margin-bottom:5px;">Recipients:</label><input id="conversation-recipient-search" class="messaging-recipient-search" placeholder="Search registered users..." oninput="renderConversationRecipients(this.value)"><div id="conversation-recipient-list" class="messaging-recipient-list"></div><div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Double-click a person to select them and start the conversation.</div></div><input id="conversation-title" class="form-control messaging-title-input" placeholder="Title..."><textarea id="conversation-body" class="form-control messaging-editor" placeholder="Write your message..."></textarea><div class="messaging-actions"><button class="btn btn-yellow" onclick="startConversation()"><i class="fa-regular fa-comments"></i> START CONVERSATION</button></div></div>`;
+        renderConversationRecipients(''); return;
+    }
+    const c=pfConversations.find(x=>String(x.id)===String(pfActiveConversationId)); if(!c){pfActiveConversationId=null;renderConversations();return;}
+    markConversationRead(c); const other=pfUserByEmail(pfOtherParticipant(c));
+    main.innerHTML=`<div class="messaging-main-header"><div><div class="messaging-main-title">${pfEscape(c.title||'Conversation')}</div><div style="font-size:12px;color:var(--text-muted);">with ${pfEscape(other.username)}</div></div><button class="btn" onclick="openNewConversationComposer()"><i class="fa-solid fa-plus"></i> New</button></div><div class="messaging-chat" id="messaging-chat">${(c.messages||[]).map(m=>{const mine=String(m.from||'').toLowerCase()===pfMeEmail();const author=mine?(currentUser.username||'You'):other.username;return `<div class="messaging-bubble-row ${mine?'mine':''}"><div class="messaging-bubble"><div class="messaging-bubble-author">${pfEscape(author)}</div><div class="messaging-bubble-text">${pfEscape(m.body)}</div><div class="messaging-bubble-time">${new Date(m.created_at||Date.now()).toLocaleString()}</div></div></div>`}).join('')}</div><div class="messaging-reply-bar"><textarea id="conversation-reply-input" class="form-control messaging-reply-input" placeholder="Write a reply..."></textarea><button class="btn btn-yellow" onclick="sendConversationReply()"><i class="fa-solid fa-paper-plane"></i></button></div>`;
+    const chat=document.getElementById('messaging-chat');if(chat)chat.scrollTop=chat.scrollHeight;renderConversationBadges();
+}
+async function sendConversationReply(){
+    const c=pfConversations.find(x=>String(x.id)===String(pfActiveConversationId)); if(!c)return;
+    const input=document.getElementById('conversation-reply-input'); const body=input?.value.trim()||''; if(!body)return;
+    const to=pfOtherParticipant(c); c.messages=c.messages||[]; c.messages.push({id:'m_'+Date.now(),from:pfMeEmail(),to,body,created_at:pfNow(),read:true}); await saveConversation(c);renderConversations();
+}
+
+function showConversationsView(){
+    if(!currentUser){openModal('login-modal');return;}
+    hideAllViews(); const v=document.getElementById('view-conversations');if(v)v.classList.remove('hidden');loadConversationUsers().then(()=>renderConversations());loadSharedConversations();
+}
+
+// Poll shared conversation data and forum reply notifications while logged in.
+setInterval(()=>{if(currentUser){loadSharedConversations().catch(()=>{});renderConversationBadges();}},15000);
+document.addEventListener('click',function(e){
+    const nav=document.getElementById('messaging-nav'); if(nav&&!nav.contains(e.target))closeMessagingPopovers();
+});
+
+// Keep Curator of Administrator email restriction applied even when the view rerenders.
+const pfOriginalRenderPosts = window.renderPosts;
+if(typeof pfOriginalRenderPosts==='function'){
+    window.renderPosts=function(){const r=pfOriginalRenderPosts.apply(this,arguments);document.body.classList.toggle('curator-admin-no-emails',currentUser?.role==='Curator of Administrator');return r;};
+}
+
+// Replace ban modal wording so Curator of Administrator never sees a target email.
+const pfOriginalOpenBanModal=window.openBanModal;
+if(typeof pfOriginalOpenBanModal==='function'){
+    window.openBanModal=function(gmail,username){
+        if(currentUser?.role==='Curator of Administrator'){
+            const saved=window.userToBan;
+            const result=pfOriginalOpenBanModal.apply(this,arguments);
+            const el=document.getElementById('ban-target-text'); if(el)el.textContent=`Suspending user: ${username||'User'}`;
+            return result;
+        }
+        return pfOriginalOpenBanModal.apply(this,arguments);
+    };
+}
+
+// Initialize after the existing forum scripts have loaded.
+setTimeout(()=>{loadLocalConversations();renderConversationBadges();if(currentUser){loadConversationUsers();}},250);
+</script>
+
 </body>
 </html>
