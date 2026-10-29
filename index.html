@@ -345,11 +345,12 @@
             animation: prefixOrange 2s ease-in-out infinite;
         }
 
-        /* Reviewed: static light-green badge matching the supplied reference. */
+        /* Reviewed: softly animated light-green badge matching the supplied reference. */
         .prefix-reviewed {
             color: #164b20;
             background: #c9f7c9;
             border: 1px solid #a8e6a8;
+            animation: prefixReviewed 2s ease-in-out infinite;
         }
 
         .prefix-approved {
@@ -390,6 +391,11 @@
         @keyframes prefixGreen {
             0%, 100% { opacity: .90; box-shadow: 0 0 0 rgba(22,163,74,0); }
             50% { opacity: 1; box-shadow: 0 0 12px rgba(22,163,74,.72); }
+        }
+
+        @keyframes prefixReviewed {
+            0%, 100% { opacity: .92; box-shadow: 0 0 0 rgba(168,230,168,0); }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(168,230,168,.9); }
         }
 
         @keyframes prefixRed {
