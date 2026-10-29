@@ -977,8 +977,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
     <style id="pythons-family-white-theme-enhancements">
       :root {
         color-scheme: light;
-        --bg-main: #f8fafc;
-        --bg-card: #ffffff;
+        --bg-main: #f3f5f4;
+        --bg-card: #fbfcfa;
         --bg-header: #111318;
         --bg-hover: #f1f5f9;
         --text-main: #202833;
@@ -990,7 +990,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         --folder-purple: #7c3aed;
         --shadow-soft: 0 6px 20px rgba(15, 23, 42, .06);
       }
-      html { background: #f8fafc; scroll-behavior: smooth; }
+      html { background: #f3f5f4; scroll-behavior: smooth; }
       body { background: var(--bg-main) !important; color: var(--text-main) !important; line-height: 1.55; }
       header { background: #111318 !important; color: #f8fafc !important; border-bottom: 1px solid #292d35 !important; box-shadow: 0 3px 14px rgba(0,0,0,.18); backdrop-filter: blur(12px); }
       header a, header button, header .fa-solid, header .fa-regular, header .fa-brands,
@@ -1004,11 +1004,11 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
       .forum-card, .post-card, .thread-card, .modal-body, .modal-content, .settings-card,
       .account-settings-wrap, .forum-section, .content-card, .profile-card, .conversation-panel,
       .messaging-popover, .notification-popover, .dropdown-menu, .user-menu, .panel-card {
-        background-color: #ffffff !important; color: var(--text-main) !important;
+        background-color: #fbfcfa !important; color: var(--text-main) !important;
         border-color: var(--border-color) !important; box-shadow: var(--shadow-soft);
       }
-      .thread-row { background: #ffffff; border-bottom: 1px solid #edf0f5; transition: background-color .18s ease, transform .18s ease; }
-      .thread-row:hover { background: #f1f5f9 !important; }
+      .thread-row { background: #fbfcfa; border-bottom: 1px solid #edf0f5; transition: background-color .18s ease, transform .18s ease; }
+      .thread-row:hover { background: #eaf0ed !important; }
       .thread-row, .post-card, .forum-card { border-color: var(--border-color) !important; }
       p, li, label, .thread-title, .post-content, .post-body, .modal-title { color: inherit; }
       .text-muted, .muted, small, .post-meta, .thread-meta, .user-stats, .text-secondary { color: #667085; }
@@ -1069,6 +1069,29 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 }
 .post-author .post-profile-stats { border-top-color: #d1d5db !important; }
 .post-author .post-profile-role { color: inherit; }
+</style>
+<style id="bright-white-theme-overrides">
+  :root {
+    --bg-main: #ffffff;
+    --bg-card: #ffffff;
+    --bg-header: #08090b;
+    --bg-hover: #f3f5f7;
+    --text-main: #17191c;
+    --text-muted: #4b5563;
+    --border-color: #d9dee5;
+  }
+  body { background-color:#ffffff !important; color:#17191c !important; }
+  .forum-card, .post-card, .thread-row, .modal-body, .dropdown-card,
+  .conversation-panel, .admin-panel, .curator-panel, .form-control,
+  input, textarea, select { background-color:#ffffff; color:#17191c; }
+  .thread-row:hover, .dropdown-item:hover, .messaging-row:hover,
+  .messaging-popover-link:hover { background-color:#f1f4f7 !important; }
+  .text-muted, .post-meta, .thread-meta, small { color:#4b5563; }
+  .forum-card, .post-card, .thread-row, .modal-content, .dropdown-card {
+    border-color:#d9dee5;
+  }
+  /* Keep the requested black top navigation/header. */
+  header, .site-header, .top-header, nav.navbar { background-color:#08090b !important; }
 </style>
 </head>
 <body>
@@ -2272,86 +2295,72 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 return;
             }
 
-            const records = [];
-            const seen = new Map();
+            const events = [];
+            const seenLegacy = new Set();
             (Array.isArray(threads) ? threads : []).forEach(thread => {
                 (Array.isArray(thread.posts) ? thread.posts : []).forEach(post => {
-                    const details = post.banDetails || {};
-                    const unban = post.unbanDetails || {};
-                    if (!Object.keys(details).length && !Object.keys(unban).length) return;
-
                     const email = String(post.gmail || '').trim().toLowerCase();
-                    const username = String(post.author || '').trim();
+                    const username = String(post.author || 'Unknown Player').trim();
                     const key = email || username.toLowerCase();
                     if (!key) return;
-
-                    const localUser = registeredUsers.find(u =>
-                        (email && String(u.gmail || '').trim().toLowerCase() === email) ||
-                        (!email && String(u.username || '').trim().toLowerCase() === username.toLowerCase())
-                    ) || {};
-
-                    const activeBan = String(post.role || '').trim().toLowerCase() === 'banned';
-                    const existing = seen.get(key);
-                    const record = {
-                        username: username || localUser.username || 'Unknown Player',
-                        activeBan,
-                        bannedByName: details.bannedByName || (existing && existing.bannedByName) || 'Unknown Moderator',
-                        bannedByRole: details.bannedByRole || (existing && existing.bannedByRole) || 'Administrator',
-                        reason: details.reason || (existing && existing.reason) || 'No reason was provided.',
-                        unbannedByName: unban.unbannedByName || (existing && existing.unbannedByName) || '',
-                        unbannedByRole: unban.unbannedByRole || (existing && existing.unbannedByRole) || '',
-                        unbannedAt: unban.unbannedAt || (existing && existing.unbannedAt) || ''
-                    };
-
-                    if (!existing) {
-                        seen.set(key, record);
-                        records.push(record);
-                    } else {
-                        Object.assign(existing, record);
+                    const history = Array.isArray(post.moderationHistory) ? post.moderationHistory : [];
+                    history.forEach((event, index) => {
+                        events.push({
+                            username, key, type: event.type === 'unban' ? 'unban' : 'ban',
+                            time: event.time || event.bannedAt || event.unbannedAt || '',
+                            moderatorName: event.moderatorName || event.bannedByName || event.unbannedByName || 'Unknown Moderator',
+                            moderatorRole: event.moderatorRole || event.bannedByRole || event.unbannedByRole || 'Unknown Role',
+                            reason: event.reason || '', duration: event.duration || event.timeLimit || 'Not specified',
+                            unique: `${key}:${event.type}:${event.time || event.bannedAt || event.unbannedAt || index}`
+                        });
+                    });
+                    // Older records did not have a history array. Preserve their latest ban/unban details.
+                    const ban = post.banDetails || {};
+                    const unban = post.unbanDetails || {};
+                    if (Object.keys(ban).length) {
+                        const id = `${key}:legacy-ban:${ban.bannedAt || ban.reason || ''}`;
+                        if (!history.length && !seenLegacy.has(id)) {
+                            seenLegacy.add(id);
+                            events.push({username, key, type:'ban', time:ban.bannedAt || '', moderatorName:ban.bannedByName || 'Unknown Moderator', moderatorRole:ban.bannedByRole || 'Unknown Role', reason:ban.reason || 'No reason was provided.', duration:ban.time || 'Not specified', unique:id});
+                        }
+                    }
+                    if (Object.keys(unban).length) {
+                        const id = `${key}:legacy-unban:${unban.unbannedAt || ''}`;
+                        if (!history.length && !seenLegacy.has(id)) {
+                            seenLegacy.add(id);
+                            events.push({username, key, type:'unban', time:unban.unbannedAt || '', moderatorName:unban.unbannedByName || 'Unknown Moderator', moderatorRole:unban.unbannedByRole || 'Unknown Role', reason:'', duration:'', unique:id});
+                        }
                     }
                 });
             });
 
-            if (!records.length) {
-                container.innerHTML = `
-                    <div class="admin-ban-card" style="text-align:center; color:var(--text-muted); padding:30px;">
-                        <i class="fa-solid fa-circle-check" style="font-size:28px; margin-bottom:10px;"></i>
-                        <div>No ban or unban records found.</div>
-                    </div>`;
+            // Each moderation action is its own message/card, newest first.
+            const uniqueEvents = Array.from(new Map(events.map(e => [e.unique, e])).values())
+                .sort((a,b) => String(b.time).localeCompare(String(a.time)));
+            if (!uniqueEvents.length) {
+                container.innerHTML = `<div class="admin-ban-card" style="text-align:center;color:var(--text-muted);padding:30px;">
+                    <i class="fa-solid fa-circle-check" style="font-size:28px;margin-bottom:10px;"></i>
+                    <div>No ban or unban records found yet.</div></div>`;
                 return;
             }
 
-            container.innerHTML = records.map(record => `
-                <div class="admin-ban-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
-                        <strong style="font-size:16px;"><i class="fa-solid ${record.activeBan ? 'fa-user-slash' : 'fa-user-check'}" style="color:${record.activeBan ? '#ef4444' : '#10b981'};"></i> ${escapeBannedText(record.username)}</strong>
-                        <span class="role-badge ${record.activeBan ? 'role-banned' : 'role-player'}">${record.activeBan ? 'Banned' : 'Unbanned'}</span>
+            container.innerHTML = uniqueEvents.map(event => {
+                const isBan = event.type === 'ban';
+                const when = event.time ? new Date(event.time).toLocaleString() : 'Time not recorded';
+                return `<article class="admin-ban-card moderation-event-card" style="margin-bottom:14px;background:#fbfcfa;border:1px solid #dfe5e1;border-radius:12px;padding:16px;box-shadow:0 3px 12px rgba(25,40,32,.05);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                        <strong style="font-size:16px;color:#202833;"><i class="fa-solid ${isBan ? 'fa-user-slash' : 'fa-user-check'}" style="color:${isBan ? '#c62828' : '#247a45'};"></i> ${isBan ? 'Player Banned' : 'Player Unbanned'}: ${escapeBannedText(event.username)}</strong>
+                        <span class="role-badge ${isBan ? 'role-banned' : 'role-player'}">${isBan ? 'BAN EVENT' : 'UNBAN EVENT'}</span>
                     </div>
                     <div class="admin-ban-grid">
-                        <div class="admin-ban-field">
-                            <span class="admin-ban-label">Banned By</span>
-                            <div class="admin-ban-value">${escapeBannedText(record.bannedByName)}</div>
-                        </div>
-                        <div class="admin-ban-field">
-                            <span class="admin-ban-label">Moderator Role</span>
-                            <div class="admin-ban-value">${escapeBannedText(record.bannedByRole)}</div>
-                        </div>
-                        <div class="admin-ban-field">
-                            <span class="admin-ban-label">Reason</span>
-                            <div class="admin-ban-value">${escapeBannedText(record.reason)}</div>
-                        </div>
-                        ${record.unbannedByName ? `
-                        <div class="admin-ban-field">
-                            <span class="admin-ban-label">Unbanned By</span>
-                            <div class="admin-ban-value">${escapeBannedText(record.unbannedByName)}</div>
-                        </div>
-                        <div class="admin-ban-field">
-                            <span class="admin-ban-label">Unbanned By Role</span>
-                            <div class="admin-ban-value">${escapeBannedText(record.unbannedByRole || 'Unknown Moderator')}</div>
-                        </div>` : ''}
+                        <div class="admin-ban-field"><span class="admin-ban-label">Action</span><div class="admin-ban-value" style="color:#202833;">${isBan ? 'Banned' : 'Unbanned'}</div></div>
+                        <div class="admin-ban-field"><span class="admin-ban-label">${isBan ? 'Banned By' : 'Unbanned By'}</span><div class="admin-ban-value" style="color:#202833;">${escapeBannedText(event.moderatorName)}</div></div>
+                        <div class="admin-ban-field"><span class="admin-ban-label">Moderator Role</span><div class="admin-ban-value" style="color:#202833;">${escapeBannedText(event.moderatorRole)}</div></div>
+                        <div class="admin-ban-field"><span class="admin-ban-label">Date &amp; Time</span><div class="admin-ban-value" style="color:#202833;">${escapeBannedText(when)}</div></div>
+                        ${isBan ? `<div class="admin-ban-field"><span class="admin-ban-label">Ban Duration</span><div class="admin-ban-value" style="color:#202833;">${escapeBannedText(event.duration)}</div></div><div class="admin-ban-field" style="grid-column:1/-1;"><span class="admin-ban-label">Reason</span><div class="admin-ban-value" style="color:#202833;white-space:pre-wrap;">${escapeBannedText(event.reason || 'No reason was provided.')}</div></div>` : ''}
                     </div>
-                </div>
-            `).join('');
+                </article>`;
+            }).join('');
         }
 
         function openSettingsTab(tab) {
@@ -3171,12 +3180,16 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 // Update the account immediately in local storage.
                 userToBan.isBanned = true;
                 userToBan.role = 'Banned';
+                const banEvent = {
+                    type: 'ban', time: new Date().toISOString(), duration: time, reason,
+                    moderatorName: currentUser.username || 'Unknown Moderator',
+                    moderatorRole: currentUser.role || 'Unknown Role'
+                };
+                userToBan.moderationHistory = Array.isArray(userToBan.moderationHistory) ? userToBan.moderationHistory : [];
+                userToBan.moderationHistory.push(banEvent);
                 userToBan.banDetails = {
-                    time,
-                    reason,
-                    bannedAt: new Date().toISOString(),
-                    bannedByName: currentUser.username || 'Unknown Moderator',
-                    bannedByRole: currentUser.role
+                    time, reason, bannedAt: banEvent.time,
+                    bannedByName: banEvent.moderatorName, bannedByRole: banEvent.moderatorRole
                 };
                 delete userToBan.unbanDetails;
                 saveUserToDB(userToBan);
@@ -3191,12 +3204,12 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                             (!targetEmail && String(post.author || '') === String(targetUsername));
                         if (sameUser) {
                             post.role = 'Banned';
+                            post.moderationHistory = Array.isArray(post.moderationHistory) ? post.moderationHistory : [];
+                            // Keep one separate audit entry for every ban action.
+                            post.moderationHistory.push({ ...banEvent });
                             post.banDetails = {
-                                time,
-                                reason,
-                                bannedAt: new Date().toISOString(),
-                                bannedByName: currentUser.username || 'Unknown Moderator',
-                                bannedByRole: currentUser.role
+                                time, reason, bannedAt: banEvent.time,
+                                bannedByName: banEvent.moderatorName, bannedByRole: banEvent.moderatorRole
                             };
                             delete post.unbanDetails;
                             updated = true;
@@ -3277,6 +3290,9 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     unbannedByName: currentUser.username || 'Unknown Moderator',
                     unbannedByRole: currentUser.role || 'Unknown Moderator'
                 };
+                const unbanEvent = { type: 'unban', time: unbanDetails.unbannedAt, moderatorName: unbanDetails.unbannedByName, moderatorRole: unbanDetails.unbannedByRole };
+                targetUser.moderationHistory = Array.isArray(targetUser.moderationHistory) ? targetUser.moderationHistory : [];
+                targetUser.moderationHistory.push(unbanEvent);
                 targetUser.isBanned = false;
                 targetUser.role = 'Player';
                 targetUser.unbanDetails = unbanDetails;
@@ -3291,6 +3307,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     t.posts.forEach(post => {
                         if (String(post.gmail || '').trim().toLowerCase() === normalizedGmail) {
                             post.role = 'Player';
+                            post.moderationHistory = Array.isArray(post.moderationHistory) ? post.moderationHistory : [];
+                            post.moderationHistory.push({ ...unbanEvent });
                             post.unbanDetails = {
                                 unbannedAt: unbanDetails.unbannedAt,
                                 unbannedByName: unbanDetails.unbannedByName,
