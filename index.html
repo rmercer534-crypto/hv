@@ -450,14 +450,6 @@
             box-shadow: 0 0 8px rgba(139, 92, 246, .28), inset 0 1px 0 rgba(255,255,255,.16);
         }
 
-        /* Technical Administration: teal badge, separate from other staff roles. */
-        .role-technical-administration {
-            background: linear-gradient(180deg, #22d3ee 0%, #0e7490 100%);
-            color: #06252b;
-            border: 1px solid #0891b2;
-            box-shadow: 0 0 8px rgba(34, 211, 238, .24), inset 0 1px 0 rgba(255,255,255,.16);
-        }
-
         /* Assistant Administrator: green badge; permissions remain limited. */
         .role-assistant-administrator {
             background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%);
@@ -1399,7 +1391,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;">
                         <div>
                             <h2 style="margin:0 0 5px;"><i class="fa-solid fa-crown"></i> Curator Panel</h2>
-                            <div style="color:var(--text-muted); font-size:13px;">Only Curator of Pythons can access the Curator Panel.</div>
+                            <div style="color:var(--text-muted); font-size:13px;">Only the Curator of Pythons can access this panel.</div>
                         </div>
                         <button class="btn" onclick="navigateTo('forum-list')"><i class="fa-solid fa-arrow-left"></i> Back</button>
                     </div>
@@ -1430,7 +1422,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                         <div><h2 style="margin:0 0 5px;"><i class="fa-solid fa-screwdriver-wrench"></i> Technical Panel</h2><div style="color:var(--text-muted);font-size:13px;">Registered accounts and secure account password administration.</div></div>
                         <button class="btn" onclick="loadTechnicalUsers()"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     </div>
-                    <div class="verification-note" style="margin-bottom:16px;">Account data is retrieved from Supabase Authentication. Only Curator of Pythons and Technical Administration can access this panel and directly change passwords for registered accounts. Passwords are never displayed. Changes are applied securely by a server-side function.</div>
+                    <div class="verification-note" style="margin-bottom:16px;">Account data is retrieved from Supabase Authentication. Only Curator of Pythons can access this panel and directly change passwords for registered accounts. Passwords are never displayed. Changes are applied securely by a server-side function.</div>
                     <div id="technical-users-status" style="margin-bottom:12px;color:var(--text-muted);">Loading registered accounts…</div>
                     <div id="technical-users-container"></div>
                 </div>
@@ -2049,7 +2041,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                         if (postEmail === email && post.role) matchingRoles.push(String(post.role));
                     });
                 });
-                const validRoles = ['Player', 'Assistant Administrator', 'Technical Administration', 'Administrator', 'Senior Administrator', 'Curator of Administrator', 'Curator of Pythons', 'Curator of Chilling', 'Banned'];
+                const validRoles = ['Player', 'Assistant Administrator', 'Administrator', 'Senior Administrator', 'Curator of Administrator', 'Curator of Pythons', 'Curator of Chilling', 'Banned'];
                 const postRole = [...matchingRoles].reverse().find(r => validRoles.includes(r));
                 if (!profileFound && postRole) user.role = postRole;
             } catch (error) {
@@ -2240,7 +2232,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 const isSelf = String(u.gmail || '').toLowerCase() === String(currentUser.gmail || '').toLowerCase();
                 const banned = !!u.isBanned || role === 'Banned';
                 const status = banned ? 'Banned' : (u.isLoggedIn === true ? 'Logged in' : 'Not logged in');
-                const options = ['Player','Assistant Administrator','Technical Administration','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling']
+                const options = ['Player','Assistant Administrator','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling']
                     .map(r => `<option value="${r}" ${role === r ? 'selected' : ''}>${r}</option>`).join('');
                 return `
                     <div class="curator-user-card">
@@ -2275,7 +2267,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             }
             const select = document.getElementById(`curator-role-${index}`);
             const newRole = select ? select.value : 'Player';
-            if (!['Player','Assistant Administrator','Technical Administration','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling'].includes(newRole)) return;
+            if (!['Player','Assistant Administrator','Administrator','Senior Administrator','Curator of Administrator','Curator of Pythons','Curator of Chilling'].includes(newRole)) return;
 
             const local = registeredUsers.find(u =>
                 (target.gmail && String(u.gmail || '').toLowerCase() === String(target.gmail).toLowerCase()) ||
@@ -2321,15 +2313,11 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         }
 
         function canAccessTechnicalPanel() {
-            return !!currentUser && ['Curator of Pythons', 'Technical Administration'].includes(currentUser.role);
-        }
-
-        function canChangeTechnicalPasswords() {
-            return !!currentUser && ['Curator of Pythons', 'Technical Administration'].includes(currentUser.role);
+            return !!currentUser && currentUser.role === 'Curator of Pythons';
         }
 
         function showTechnicalPanelView() {
-            if (!canAccessTechnicalPanel()) { alert('Access denied. Only Curator of Pythons and Technical Administration can open the Technical Panel.'); navigateTo('forum-list'); return; }
+            if (!canAccessTechnicalPanel()) { alert('Access denied. Only the Curator of Pythons can open the Technical Panel.'); navigateTo('forum-list'); return; }
             hideAllViews();
             document.getElementById('view-technical-panel').classList.remove('hidden');
             renderTechnicalPanel();
@@ -2395,7 +2383,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         // Only Curator of Pythons can change any registered Auth account password.
         // The Edge Function independently verifies the caller's JWT and role.
         async function changeTechnicalAccountPassword(index) {
-            if (!canChangeTechnicalPasswords()) { alert('Access denied. Technical Panel password access is restricted to Curator of Pythons and Technical Administration.'); return; }
+            if (!canAccessTechnicalPanel()) { alert('Access denied. Only Curator of Pythons can change account passwords.'); return; }
             const target = (window.__technicalPanelUsers || [])[index];
             if (!target || !target.email) { alert('The selected account could not be identified. Refresh the account list.'); return; }
             const passwordInput = document.getElementById(`technical-password-${index}`);
@@ -2695,9 +2683,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             const adminControls = document.getElementById('admin-controls');
             const isStaff = isStaffUser();
             const isAssistant = isAssistantAdministrator();
-            const isTechnicalAdmin = isTechnicalAdministrator();
 
-            if (isStaff || isAssistant || isTechnicalAdmin) {
+            if (isStaff || isAssistant) {
                 adminControls.classList.remove('hidden');
 
                 const statusSelect = document.getElementById('admin-status-select');
@@ -2705,13 +2692,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 const deleteButton = adminControls.querySelector('button.btn-red[onclick="deleteActiveThread()"]');
 
                 if (statusSelect) {
-                    if (isTechnicalAdmin) {
-                        statusSelect.innerHTML = `<option value="Pending review">Pending review</option><option value="Reviewed">Reviewed</option><option value="Sorted">Sorted</option>`;
-                        const canEditCurrentPrefix = technicalAdminAllowedPrefix(thread.prefix);
-                        if (!canEditCurrentPrefix) { const currentPrefixOption=document.createElement('option'); currentPrefixOption.value=thread.prefix; currentPrefixOption.textContent=thread.prefix; statusSelect.appendChild(currentPrefixOption); }
-                        statusSelect.value=thread.prefix; statusSelect.disabled=!canEditCurrentPrefix;
-                        statusSelect.title=canEditCurrentPrefix ? 'You can manage Pending review, Reviewed, and Sorted threads only.' : 'This thread prefix is outside Technical Administration permissions.';
-                    } else if (isAssistant) {
+                    if (isAssistant) {
                         statusSelect.innerHTML = `<option value="Pending review">Pending review</option><option value="For Curator of Pythons">For Curator of Pythons</option><option value="Sorted">Sorted</option>`;
                         const canEditCurrentPrefix = assistantAllowedPrefix(thread.prefix);
                         if (!canEditCurrentPrefix) {
@@ -2744,7 +2725,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                         '<i class="fa-solid fa-box-archive"></i> Move to Archive';
                 }
 
-                if (deleteButton) deleteButton.style.display = (isAssistant || isTechnicalAdmin) ? 'none' : '';
+                if (deleteButton) deleteButton.style.display = isAssistant ? 'none' : '';
 
                 document.getElementById('lock-btn-text').innerText =
                     thread.isLocked ? "Unlock Thread" : "Lock Thread";
@@ -2855,7 +2836,6 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             const roleMap = {
                 'player': 'role-player',
                 'assistant administrator': 'role-assistant-administrator',
-                'technical administration': 'role-technical-administration',
                 'administrator': 'role-administrator',
                 'senior administrator': 'role-senior-administrator',
                 'curator of administrator': 'role-curator-of-administrator',
@@ -2903,8 +2883,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 'Senior Administrator',
                 'Curator of Administrator',
                 'Curator of Chilling',
-                'Curator of Pythons',
-                'Technical Administration'
+                'Curator of Pythons'
             ].includes(currentUser.role);
         }
 
@@ -2929,16 +2908,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             return !!currentUser && currentUser.role === 'Assistant Administrator';
         }
 
-        function isTechnicalAdministrator() {
-            return !!currentUser && currentUser.role === 'Technical Administration';
-        }
-
-        function technicalAdminAllowedPrefix(prefix) {
-            return ['Pending review', 'Reviewed', 'Sorted'].includes(prefix);
-        }
-
         function canUseSortedPrefix() {
-            return !!currentUser && (currentUser.role === 'Assistant Administrator' || currentUser.role === 'Curator of Pythons' || currentUser.role === 'Technical Administration');
+            return !!currentUser && (currentUser.role === 'Assistant Administrator' || currentUser.role === 'Curator of Pythons');
         }
 
         function assistantAllowedPrefix(prefix) {
@@ -2946,11 +2917,11 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         }
 
         function canManageThreadLock() {
-            return isStaffUser() || isAssistantAdministrator() || (currentUser && currentUser.role === 'Technical Administration');
+            return isStaffUser() || isAssistantAdministrator();
         }
 
         function canReplyInLockedThread() {
-            return isStaffUser() || isAssistantAdministrator() || (currentUser && currentUser.role === 'Technical Administration');
+            return isStaffUser() || isAssistantAdministrator();
         }
 
         // Ban/unban: Curator of Pythons, Curator of Administrator, and Senior
@@ -2975,13 +2946,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             if(importantOption) importantOption.style.display=(!assistant&&canUseImportantPrefix())?'block':'none';
             if(adminImportantOption) adminImportantOption.style.display=(!assistant&&canUseImportantPrefix())?'':'none';
             if(sortedOption) sortedOption.style.display=canUseSortedPrefix()?'':'none';
-            const statusSelect=document.getElementById('admin-status-select');
-            if(statusSelect){ Array.from(statusSelect.options).forEach(o=>{ if(isTechnicalAdministrator()) o.hidden=!technicalAdminAllowedPrefix(o.value); else if(assistant) o.hidden=!assistantAllowedPrefix(o.value); else o.hidden=false; }); }
-            if(isTechnicalAdministrator()){
-                prefixButton.style.display=''; staffOptions.classList.add('hidden');
-                if(prefixMenu) prefixMenu.querySelectorAll('.dropdown-item').forEach(item=>{const t=item.textContent.trim(); item.style.display=(t==='Pending review'||t==='Reviewed'||t==='Sorted')?'':'none';});
-                if(!technicalAdminAllowedPrefix(selectedPrefix)) selectedPrefix='Pending review';
-            } else if(assistant){
+            if(assistant){
                 prefixButton.style.display=''; staffOptions.classList.add('hidden');
                 if(prefixMenu) prefixMenu.querySelectorAll('.dropdown-item').forEach(item=>{const t=item.textContent.trim(); item.style.display=(t==='Pending review'||t==='For Curator of Pythons'||t==='Sorted')?'':'none';});
                 if(!assistantAllowedPrefix(selectedPrefix)) selectedPrefix='Pending review';
@@ -3000,12 +2965,11 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 
         function selectPrefix(prefix) {
             if(prefix==='Reviewed'&&!canUseReviewedPrefix()){alert('Only Administrator, Senior Administrator, and Curators can select the Reviewed prefix.');return;}
-            if(isTechnicalAdministrator()&&!technicalAdminAllowedPrefix(prefix)){alert('Technical Administration can only use Pending review, Reviewed, or Sorted.');return;}
             if(isAssistantAdministrator()&&!assistantAllowedPrefix(prefix)){alert('Assistant Administrator can only use Pending review, For Curator of Pythons, or Sorted.');return;}
-            if(prefix==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator, Curator of Pythons, and Technical Administration can use the Sorted prefix.');return;}
+            if(prefix==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator and Curator of Pythons can use the Sorted prefix.');return;}
             if(prefix==='IMPORTANT'&&!canUseImportantPrefix()){alert('Only Curator of Pythons and Curator of Administrator can select the IMPORTANT prefix.');return;}
             const playerAllowedPrefixes=['Pending review','For Curator of Pythons'];
-            if(!isStaffUser()&&!isAssistantAdministrator()&&!isTechnicalAdministrator()&&!playerAllowedPrefixes.includes(prefix)){alert('Players can only use "Pending review" or "For Curator of Pythons".');return;}
+            if(!isStaffUser()&&!isAssistantAdministrator()&&!playerAllowedPrefixes.includes(prefix)){alert('Players can only use "Pending review" or "For Curator of Pythons".');return;}
             selectedPrefix=prefix; const btn=document.getElementById('prefix-select-btn'); if(btn){btn.className=`prefix ${getPrefixClass(selectedPrefix)}`;btn.innerHTML=`${selectedPrefix} <i class="fa-solid fa-caret-down"></i>`;} const menu=document.getElementById('prefix-menu');if(menu)menu.style.display='none';
         }
 
@@ -3024,7 +2988,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 const allowed = ['Pending review', 'For Curator of Pythons'];
                 const prefix = isAssistantAdministrator()
                     ? 'Pending review'
-                    : ((isStaffUser() || isTechnicalAdministrator()) ? selectedPrefix : (allowed.includes(selectedPrefix) ? selectedPrefix : 'Pending review'));
+                    : (isStaffUser() ? selectedPrefix : (allowed.includes(selectedPrefix) ? selectedPrefix : 'Pending review'));
                 const title = document.getElementById('thread-title').value.trim();
                 const content = document.getElementById('thread-content').value.trim();
                 const newThread = {
@@ -3144,7 +3108,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 
             const replyContainer = document.getElementById('reply-container');
             
-            if (thread.isLocked && !isStaff && !isAssistantAdministrator() && !isTechnicalAdministrator()) {
+            if (thread.isLocked && !isStaff && !isAssistantAdministrator()) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 10px;"><i class="fa-solid fa-lock" style="color:var(--accent-yellow);"></i> This thread is not open for further replies.</div>`;
             } else if (!currentUser) {
                 replyContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted);">Please log in to leave a reply.</div>`;
@@ -3192,12 +3156,11 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 
         async function updateThreadStatus(status) {
             const thread=threads.find(t=>String(t.id)===String(activeThreadId));
-            if(!thread||(!isStaffUser()&&!isAssistantAdministrator()&&!isTechnicalAdministrator())) return;
+            if(!thread||(!isStaffUser()&&!isAssistantAdministrator())) return;
             if(status==='Reviewed'&&!canUseReviewedPrefix()){alert('Only Administrator, Senior Administrator, and Curators can change a thread to Reviewed.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
-            if(isTechnicalAdministrator()&&(!technicalAdminAllowedPrefix(thread.prefix)||!technicalAdminAllowedPrefix(status))){alert('Technical Administration can only change threads whose current prefix is Pending review, Reviewed, or Sorted, and can only set one of those prefixes.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
             if(isAssistantAdministrator()&&!assistantAllowedPrefix(thread.prefix)){alert('Assistant Administrator cannot change this thread because its current prefix is not Pending review, For Curator of Pythons, or Sorted.');const select=document.getElementById('admin-status-select');if(select){select.value=thread.prefix;select.disabled=true;}return;}
             if(isAssistantAdministrator()&&!assistantAllowedPrefix(status)){alert('Assistant Administrator can only change a permitted thread to Pending review, For Curator of Pythons, or Sorted.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
-            if(status==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator, Curator of Pythons, and Technical Administration can use the Sorted prefix.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
+            if(status==='Sorted'&&!canUseSortedPrefix()){alert('Only Assistant Administrator and Curator of Pythons can use the Sorted prefix.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
             if(status==='IMPORTANT'&&!canUseImportantPrefix()){alert('Only Curator of Pythons and Curator of Administrator can select the IMPORTANT prefix.');const select=document.getElementById('admin-status-select');if(select)select.value=thread.prefix;return;}
             const previousStatus=thread.prefix; thread.prefix=status; const saved=await saveThreadToDB(thread);
             if(saved) reloadWebsite(`thread-${thread.id}`); else {thread.prefix=previousStatus;upsertLocalThread(thread);refreshActiveView();}
@@ -3255,7 +3218,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 
         async function toggleArchiveThread() {
             const thread = threads.find(t => String(t.id) === String(activeThreadId));
-            if (!thread || (!isStaffUser() && !isAssistantAdministrator() && !isTechnicalAdministrator())) return;
+            if (!thread || (!isStaffUser() && !isAssistantAdministrator())) return;
             const nextArchived = !thread.isArchived;
             thread.isArchived = nextArchived;
             const saved = await saveThreadToDB(thread);
@@ -3944,7 +3907,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
     </script>
 <script>
 (function(){
-  window.PF_ALLOWED_ROLES=['Player','Technical Administration','Administrator','Senior Administrator','Assistant Administrator','Curator of Chilling','Curator of Pythons','Curator of Administrator'];
+  window.PF_ALLOWED_ROLES=['Player','Administrator','Senior Administrator','Assistant Administrator','Curator of Chilling','Curator of Pythons','Curator of Administrator'];
   window.PF_NORMALIZE_ROLE=function(r){return PF_ALLOWED_ROLES.includes(r)?r:'Player';};
   window.addEventListener('storage',function(e){
     if(e.key!=='pf_role_sync'||!e.newValue)return;
