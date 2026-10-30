@@ -1419,10 +1419,10 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 <div class="breadcrumb"><a onclick="navigateTo('forum-list')">Home</a><span>&gt;</span><span style="color:var(--text-main);">Technical Panel</span></div>
                 <div class="forum-card" style="padding:20px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-                        <div><h2 style="margin:0 0 5px;"><i class="fa-solid fa-screwdriver-wrench"></i> Technical Panel</h2><div style="color:var(--text-muted);font-size:13px;">Registered accounts and user-consented password recovery.</div></div>
+                        <div><h2 style="margin:0 0 5px;"><i class="fa-solid fa-screwdriver-wrench"></i> Technical Panel</h2><div style="color:var(--text-muted);font-size:13px;">Registered accounts and secure account password administration.</div></div>
                         <button class="btn" onclick="loadTechnicalUsers()"><i class="fa-solid fa-rotate"></i> Refresh</button>
                     </div>
-                    <div class="verification-note" style="margin-bottom:16px;">Account data is retrieved from Supabase Authentication by a server-side function. Passwords are never displayed or set by moderators. For security, the account owner must initiate password recovery using the forum's Forgot password option and choose their own new password.</div>
+                    <div class="verification-note" style="margin-bottom:16px;">Account data is retrieved from Supabase Authentication. Only Curator of Pythons can access this panel and directly change passwords for registered accounts. Passwords are never displayed. Changes are applied securely by a server-side function.</div>
                     <div id="technical-users-status" style="margin-bottom:12px;color:var(--text-muted);">Loading registered accounts…</div>
                     <div id="technical-users-container"></div>
                 </div>
@@ -2364,13 +2364,13 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     return;
                 }
 
-                container.innerHTML = `<div style="overflow-x:auto;"><table class="details-table" style="width:100%;"><thead><tr><th>Username</th><th>Email</th><th>Forum role</th><th>Email status</th><th>Registered</th></tr></thead><tbody>${users.map(u => {
+                container.innerHTML = `<div style="overflow-x:auto;"><table class="details-table" style="width:100%;"><thead><tr><th>Username</th><th>Email</th><th>Forum role</th><th>Email status</th><th>Registered</th><th>Set password</th></tr></thead><tbody>${users.map((u, index) => {
                     const username = u.username || 'Unnamed user';
                     const email = u.email || '';
                     const role = u.role || 'Player';
                     const emailStatus = u.email_confirmed_at ? 'Confirmed' : 'Not confirmed';
                     const created = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
-                    return `<tr><td>${escapeBannedText(username)}</td><td>${escapeBannedText(email)}</td><td>${escapeBannedText(role)}</td><td>${escapeBannedText(emailStatus)}</td><td>${escapeBannedText(created)}</td></tr>`;
+                    return `<tr><td>${escapeBannedText(username)}</td><td>${escapeBannedText(email)}</td><td>${escapeBannedText(role)}</td><td>${escapeBannedText(emailStatus)}</td><td>${escapeBannedText(created)}</td><td style="min-width:230px;"><input type="password" id="technical-password-${index}" autocomplete="new-password" minlength="8" placeholder="New password (8+ chars)" style="width:100%;margin-bottom:6px;"><input type="password" id="technical-password-confirm-${index}" autocomplete="new-password" minlength="8" placeholder="Confirm password" style="width:100%;margin-bottom:6px;"><button class="btn" onclick="changeTechnicalAccountPassword(${index})">Change Password</button></td></tr>`;
                 }).join('')}</tbody></table></div>`;
             } catch (error) {
                 console.error('Technical Panel Auth account load failed:', error);
@@ -2380,11 +2380,32 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             }
         }
 
-        // Password recovery is deliberately owner-initiated. A moderator-side
-        // confirmation dialog is not proof of account-owner consent.
-        async function openTechnicalPasswordChange() {
-            if (!canAccessTechnicalPanel()) { alert('Access denied.'); return; }
-            alert('For account security, the account owner must use Forgot password on the forum login screen and complete the reset from their registered email. The Technical Panel does not set or reveal passwords.');
+        // Only Curator of Pythons can change any registered Auth account password.
+        // The Edge Function independently verifies the caller's JWT and role.
+        async function changeTechnicalAccountPassword(index) {
+            if (!canAccessTechnicalPanel()) { alert('Access denied. Only Curator of Pythons can change account passwords.'); return; }
+            const target = (window.__technicalPanelUsers || [])[index];
+            if (!target || !target.email) { alert('The selected account could not be identified. Refresh the account list.'); return; }
+            const passwordInput = document.getElementById(`technical-password-${index}`);
+            const confirmInput = document.getElementById(`technical-password-confirm-${index}`);
+            const newPassword = passwordInput ? passwordInput.value : '';
+            const confirmation = confirmInput ? confirmInput.value : '';
+            if (newPassword.length < 8) { alert('The new password must contain at least 8 characters.'); return; }
+            if (newPassword !== confirmation) { alert('The passwords do not match.'); return; }
+            if (!confirm(`Change the password for ${target.username || target.email} (${target.email})? This takes effect immediately and does not send a reset email.`)) return;
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('technical-list-users', {
+                    body: { action: 'set-password', email: target.email, newPassword }
+                });
+                if (error) throw error;
+                if (!data || data.success !== true) throw new Error(data && data.error ? data.error : 'Password update failed.');
+                if (passwordInput) passwordInput.value = '';
+                if (confirmInput) confirmInput.value = '';
+                alert(`Password successfully changed for ${target.username || target.email}.`);
+            } catch (error) {
+                console.error('Technical Panel password update failed:', error);
+                alert(error.message || 'Could not change this account password.');
+            }
         }
 
         function canAccessAdminPanel() {
