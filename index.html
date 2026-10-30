@@ -1151,6 +1151,9 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     <div class="dropdown-item" id="curator-panel-menu-item" style="display:none;" onclick="navigateTo('curator-panel'); toggleProfileDropdown();">
                         <i class="fa-solid fa-crown"></i> Curator Panel
                     </div>
+                    <div class="dropdown-item" id="technical-panel-menu-item" style="display:none;" onclick="navigateTo('technical-panel'); toggleProfileDropdown();">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Technical Panel
+                    </div>
                     <div class="dropdown-item" onclick="navigateTo('account-details'); toggleProfileDropdown();">
                         <i class="fa-solid fa-user-gear"></i> Account Settings
                     </div>
@@ -1411,6 +1414,20 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 </div>
             </div>
 
+            <!-- TECHNICAL PANEL: CURATOR OF PYTHONS ONLY -->
+            <div id="view-technical-panel" class="hidden">
+                <div class="breadcrumb"><a onclick="navigateTo('forum-list')">Home</a><span>&gt;</span><span style="color:var(--text-main);">Technical Panel</span></div>
+                <div class="forum-card" style="padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+                        <div><h2 style="margin:0 0 5px;"><i class="fa-solid fa-screwdriver-wrench"></i> Technical Panel</h2><div style="color:var(--text-muted);font-size:13px;">Registered accounts and user-consented password recovery.</div></div>
+                        <button class="btn" onclick="loadTechnicalUsers()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    </div>
+                    <div class="verification-note" style="margin-bottom:16px;">Account data is retrieved from Supabase Authentication by a server-side function. Passwords are never displayed or set by moderators. For security, the account owner must initiate password recovery using the forum's Forgot password option and choose their own new password.</div>
+                    <div id="technical-users-status" style="margin-bottom:12px;color:var(--text-muted);">Loading registered accounts…</div>
+                    <div id="technical-users-container"></div>
+                </div>
+            </div>
+
             <!-- VIEW 5: ADMIN PANEL (ADMINISTRATOR + CURATOR OF PYTHONS) -->
             <div id="view-admin-panel" class="hidden">
                 <div class="breadcrumb">
@@ -1526,9 +1543,33 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                     <input type="password" id="login-password" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-yellow" style="width: 100%;">Sign In</button>
+                <div style="text-align:center; margin-top:10px; font-size:13px;">
+                    <a href="#" onclick="event.preventDefault(); sendOwnerPasswordRecovery();">Forgot password?</a>
+                </div>
                 <div style="text-align:center; margin-top:14px; color:var(--text-muted); font-size:13px;">
                     New here? <a href="#" onclick="event.preventDefault(); closeModal('login-modal'); openModal('register-modal');">Create an account</a>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: OWNER-INITIATED PASSWORD RECOVERY -->
+    <div class="modal-overlay" id="password-recovery-modal" style="display:none;">
+        <div class="modal-body">
+            <div class="modal-header">
+                <h3>Choose a new password</h3>
+            </div>
+            <form onsubmit="completeOwnerPasswordRecovery(event)">
+                <div class="form-group">
+                    <label>New password</label>
+                    <input type="password" id="recovery-new-password" class="form-control" minlength="8" autocomplete="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm new password</label>
+                    <input type="password" id="recovery-confirm-password" class="form-control" minlength="8" autocomplete="new-password" required>
+                </div>
+                <button type="submit" class="btn btn-yellow" style="width:100%;">Update my password</button>
+                <div class="verification-note">This form is available after opening the password-recovery email sent to the account owner.</div>
             </form>
         </div>
     </div>
@@ -1876,6 +1917,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 if (canAccessAdminPanel()) renderAdminPanel(); else navigateTo('forum-list');
             } else if (hash === 'curator-panel') {
                 if (canAccessCuratorPanel()) renderCuratorPanel(); else navigateTo('forum-list');
+            } else if (hash === 'technical-panel') {
+                if (canAccessTechnicalPanel()) renderTechnicalPanel(); else navigateTo('forum-list');
             } else if (hash.startsWith('thread-') && activeThreadId) {
                 const currentThread = threads.find(t => String(t.id) === String(activeThreadId));
                 if (currentThread) renderPosts(currentThread);
@@ -1914,6 +1957,8 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 showAdminPanelView();
             } else if (hash === 'curator-panel') {
                 showCuratorPanelView();
+            } else if (hash === 'technical-panel') {
+                showTechnicalPanelView();
             } else if (hash === 'account-details') {
                 showAccountDetailsView();
             } else if (hash.startsWith('thread-')) {
@@ -2097,7 +2142,7 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
         }
 
         function hideAllViews() {
-            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-conversations', 'view-curator-panel', 'view-admin-panel', 'view-account-details'];
+            const views = ['view-forum-list', 'view-archive-folder', 'view-create-thread', 'view-thread-detail', 'view-conversations', 'view-curator-panel', 'view-admin-panel', 'view-technical-panel', 'view-account-details'];
             views.forEach(v => {
                 const el = document.getElementById(v);
                 if (el) el.classList.add('hidden');
@@ -2265,6 +2310,81 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 alert(`${updatedUser.username || 'User'} is now ${newRole}. Their account privileges will sync across browsers.`);
             }
             reloadWebsite('curator-panel');
+        }
+
+        function canAccessTechnicalPanel() {
+            return !!currentUser && currentUser.role === 'Curator of Pythons';
+        }
+
+        function showTechnicalPanelView() {
+            if (!canAccessTechnicalPanel()) { alert('Access denied. Only the Curator of Pythons can open the Technical Panel.'); navigateTo('forum-list'); return; }
+            hideAllViews();
+            document.getElementById('view-technical-panel').classList.remove('hidden');
+            renderTechnicalPanel();
+        }
+
+        function renderTechnicalPanel() {
+            const status = document.getElementById('technical-users-status');
+            const container = document.getElementById('technical-users-container');
+            if (!canAccessTechnicalPanel()) { if (container) container.textContent = 'Access denied.'; return; }
+            if (status) status.textContent = 'Registered accounts';
+            loadTechnicalUsers();
+        }
+
+        async function loadTechnicalUsers() {
+            const status = document.getElementById('technical-users-status');
+            const container = document.getElementById('technical-users-container');
+            if (!canAccessTechnicalPanel()) {
+                if (status) status.textContent = 'Access denied.';
+                if (container) container.textContent = 'Access denied.';
+                return;
+            }
+            if (!sharedForumConfigured() || !supabaseClient) {
+                status.textContent = 'Supabase authentication is not configured.';
+                container.innerHTML = '';
+                return;
+            }
+
+            status.textContent = 'Loading registered Supabase Auth accounts…';
+            container.innerHTML = '';
+            try {
+                // The Edge Function verifies the caller's JWT and Curator role server-side,
+                // then uses the service-role key only on the server to list Auth users.
+                const { data, error } = await supabaseClient.functions.invoke('technical-list-users', { body: {} });
+                if (error) throw error;
+                if (!data || data.success !== true || !Array.isArray(data.users)) {
+                    throw new Error(data && data.error ? data.error : 'The account-list response was invalid.');
+                }
+
+                const users = data.users;
+                window.__technicalPanelUsers = users;
+                status.textContent = `${users.length} registered Supabase Auth account(s) found.`;
+                if (!users.length) {
+                    container.innerHTML = '<div class="admin-ban-card">No registered Auth accounts were returned.</div>';
+                    return;
+                }
+
+                container.innerHTML = `<div style="overflow-x:auto;"><table class="details-table" style="width:100%;"><thead><tr><th>Username</th><th>Email</th><th>Forum role</th><th>Email status</th><th>Registered</th></tr></thead><tbody>${users.map(u => {
+                    const username = u.username || 'Unnamed user';
+                    const email = u.email || '';
+                    const role = u.role || 'Player';
+                    const emailStatus = u.email_confirmed_at ? 'Confirmed' : 'Not confirmed';
+                    const created = u.created_at ? new Date(u.created_at).toLocaleDateString() : '—';
+                    return `<tr><td>${escapeBannedText(username)}</td><td>${escapeBannedText(email)}</td><td>${escapeBannedText(role)}</td><td>${escapeBannedText(emailStatus)}</td><td>${escapeBannedText(created)}</td></tr>`;
+                }).join('')}</tbody></table></div>`;
+            } catch (error) {
+                console.error('Technical Panel Auth account load failed:', error);
+                status.textContent = 'Could not load registered Auth accounts.';
+                const message = String(error && error.message || error || 'Unknown error');
+                container.innerHTML = `<div class="admin-ban-card" style="color:#9b1c1c;"><strong>Secure account-list function unavailable.</strong><br>${escapeBannedText(message)}<br><small>Deploy the technical-list-users Edge Function and configure its server-side secrets. Do not put the service-role key in this HTML.</small></div>`;
+            }
+        }
+
+        // Password recovery is deliberately owner-initiated. A moderator-side
+        // confirmation dialog is not proof of account-owner consent.
+        async function openTechnicalPasswordChange() {
+            if (!canAccessTechnicalPanel()) { alert('Access denied.'); return; }
+            alert('For account security, the account owner must use Forgot password on the forum login screen and complete the reset from their registered email. The Technical Panel does not set or reveal passwords.');
         }
 
         function canAccessAdminPanel() {
@@ -3472,6 +3592,47 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
             }
         }
 
+        async function sendOwnerPasswordRecovery() {
+            if (!supabaseClient) { alert('Secure account service is unavailable.'); return; }
+            const raw = (document.getElementById('login-email')?.value || '').trim();
+            const email = raw.includes('@') ? raw.toLowerCase() : prompt('Enter the registered email address for the account owner:');
+            if (!email || !String(email).includes('@')) { alert('Enter a valid registered email address.'); return; }
+            try {
+                const redirectTo = window.location.origin + window.location.pathname;
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(String(email).trim().toLowerCase(), { redirectTo });
+                if (error) throw error;
+                alert('If this email belongs to an account, Supabase will send a password-recovery link. The account owner must open that email and choose their own new password.');
+            } catch (error) {
+                console.error('Password recovery request failed:', error);
+                alert(error.message || 'Could not send the password-recovery email.');
+            }
+        }
+
+        function showPasswordRecoveryModal() {
+            const modal = document.getElementById('password-recovery-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        async function completeOwnerPasswordRecovery(event) {
+            event.preventDefault();
+            if (!supabaseClient) return;
+            const password = document.getElementById('recovery-new-password').value;
+            const confirmation = document.getElementById('recovery-confirm-password').value;
+            if (password.length < 8) { alert('Password must contain at least 8 characters.'); return; }
+            if (password !== confirmation) { alert('The passwords do not match.'); return; }
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password });
+                if (error) throw error;
+                document.getElementById('recovery-new-password').value = '';
+                document.getElementById('recovery-confirm-password').value = '';
+                document.getElementById('password-recovery-modal').style.display = 'none';
+                alert('Your password has been updated. You can now sign in using your new password.');
+            } catch (error) {
+                console.error('Password recovery completion failed:', error);
+                alert(error.message || 'Could not update the password. Please open a fresh recovery email and try again.');
+            }
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
             const loginIdentifier = document.getElementById('login-email').value.trim();
@@ -3652,12 +3813,16 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
                 if (adminPanelItem) adminPanelItem.style.display = canAccessAdminPanel() ? 'flex' : 'none';
                 const curatorPanelItem = document.getElementById('curator-panel-menu-item');
                 if (curatorPanelItem) curatorPanelItem.style.display = canAccessCuratorPanel() ? 'flex' : 'none';
+                const technicalPanelItem = document.getElementById('technical-panel-menu-item');
+                if (technicalPanelItem) technicalPanelItem.style.display = canAccessTechnicalPanel() ? 'flex' : 'none';
             } else {
                 document.body.classList.remove('curator-admin-no-emails');
                 const adminPanelItem = document.getElementById('admin-panel-menu-item');
                 if (adminPanelItem) adminPanelItem.style.display = 'none';
                 const curatorPanelItem = document.getElementById('curator-panel-menu-item');
                 if (curatorPanelItem) curatorPanelItem.style.display = 'none';
+                const technicalPanelItem = document.getElementById('technical-panel-menu-item');
+                if (technicalPanelItem) technicalPanelItem.style.display = 'none';
                 guestNav.classList.remove('hidden');
                 userNav.classList.add('hidden');
             }
@@ -3678,6 +3843,9 @@ body.curator-admin-no-emails .curator-email-private { display:none !important; }
 
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showPasswordRecoveryModal();
+                }
                 if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     updateAuthUI();
